@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "from": "balint",
+    "to": "zsolt",
+    "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tempus.",
+    "bid": 100
+  },
+  {
+    "id": 2,
+    "from": "balint2",
+    "to": "zsolt2",
+    "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec erat eros, mollis at imperdiet dictum, maximus ac eros. Praesent molestie.",
+    "bid": 120
+  }
+]
