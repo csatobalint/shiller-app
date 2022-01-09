@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar app blue-grey darken-4 dark>
+    <v-app-bar app primary>
       <v-toolbar-title>Shiller Crypto App</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn
@@ -62,7 +62,7 @@
         >
           {{ link.label }}
         </v-btn> -->
-        <v-flex blue-grey darken-2 py-4 text-center white--text xs12>
+        <v-flex py-4 text-center white--text xs12>
           {{ new Date().getFullYear() }} — <strong>Shiller Crypto</strong>
         </v-flex>
       </v-layout>
