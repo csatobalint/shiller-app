@@ -1,6 +1,7 @@
 <template>
   <v-app>
     <v-app-bar app primary>
+      <img :src="require('./assets/logo.svg')" class="mr-3" height="30" />
       <v-toolbar-title>Shiller Crypto App</v-toolbar-title>
       <v-spacer></v-spacer>
       <!-- <v-btn
@@ -127,6 +128,7 @@ export default {
         .auth()
         .signOut()
         .then(() => {
+          this.$store.dispatch("auth/clearUser");
           this.$router.replace({
             name: "login",
           });

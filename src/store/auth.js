@@ -20,6 +20,10 @@ const auth = {
       },
       SET_USER(state, data) {
         state.user = data;
+      },
+      DELETE_USER(state){
+        state.user = null;
+        state.isAuthenticated = false;
       }
     },
     actions: {
@@ -31,7 +35,9 @@ const auth = {
         }else {
             commit("SET_USER", null);
         }
-
+      },
+      clearUser({commit}){
+        commit("DELETE_USER");
       }
     }
 };
