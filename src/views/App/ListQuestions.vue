@@ -5,7 +5,7 @@
       <v-col>
         <v-data-table
           :headers="headers"
-          :items="tutorials"
+          :items="questions"
           :items-per-page="5"
           class="elevation-1"
         ></v-data-table>
@@ -13,7 +13,7 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-btn color="error" @click="removeAllTutorials">Delete All</v-btn>
+        <v-btn color="error" @click="removeAllQuestions">Delete All</v-btn>
       </v-col>
     </v-row>
   </v-container>
@@ -26,8 +26,8 @@ export default {
   name: "questions-list",
   data() {
     return {
-      tutorials: [],
-      currentTutorial: null,
+      questions: [],
+      currentQuestion: null,
       currentIndex: -1,
       headers: [
         {
@@ -36,39 +36,40 @@ export default {
           sortable: false,
           value: "title",
         },
-        { text: "Description", value: "description" },
+        { text: "Description", value: "description" }, 
+        { text: "Email", value: "email" }, 
       ],
     };
   },
   methods: {
     onDataChange(items) {
-      let _tutorials = [];
+      let _questions = [];
 
       items.forEach((item) => {
         let key = item.key;
         let data = item.val();
-        _tutorials.push({
+        _questions.push({
           key: key,
           title: data.title,
           description: data.description,
-          published: data.published,
+          email: data.email,
         });
       });
 
-      this.tutorials = _tutorials;
+      this.questions = _questions;
     },
 
     refreshList() {
-      this.currentTutorial = null;
+      this.currentQuestion = null;
       this.currentIndex = -1;
     },
 
-    setActiveTutorial(tutorial, index) {
-      this.currentTutorial = tutorial;
+    setActiveQuestion(question, index) {
+      this.currentQuestion = question;
       this.currentIndex = index;
     },
 
-    removeAllTutorials() {
+    removeAllQuestions() {
       QuestionDataService.deleteAll()
         .then(() => {
           this.refreshList();
