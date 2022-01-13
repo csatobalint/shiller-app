@@ -27,6 +27,7 @@
                   <v-textarea
                     name="description"
                     label="Description*"
+                    v-model="question.description"
                   ></v-textarea>
                 </v-col>
                 <v-col cols="12">
@@ -42,7 +43,7 @@
                     name="from_account"
                     label="My account"
                     id="from_account"
-                    :value="user.email"
+                    :value="userEmail"
                     disabled
                   ></v-text-field>
                 </v-col>
@@ -51,7 +52,8 @@
                     name="from_address"
                     label="My address*"
                     id="from_address"
-                    v-model="question.from_account"
+                    v-model="metamask"
+                    :disabled="metamask !== null"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12" sm="6">
@@ -60,7 +62,7 @@
                     label="Influencer account"
                     id="to_account"
                     :items="['User1', 'User2', 'User3']"
-                    v-model="question.to_account"
+                    v-model="question.toUser"
                   ></v-autocomplete>
                 </v-col>
                 <v-col cols="12" sm="6">
@@ -68,7 +70,7 @@
                     name="to_address"
                     label="Influencer address*"
                     id="to_address"
-                    v-model="question.to_address"
+                    v-model="question.toAddress"
                   ></v-text-field>
                 </v-col>
               </v-row>
@@ -101,7 +103,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
+import { mapGetters, mapActions, mapState } from "vuex";
 
 export default {
   data() {
@@ -137,18 +139,31 @@ export default {
       user: "auth/user",
       isAuthenticated: "auth/isAuthenticated",
     }),
+    ...mapState({
+      metamask: (state) => state.auth.metamask,
+    }),
+    userEmail() {
+      if (this.user) return this.user.email;
+      else return "";
+    },
+    userMetamask() {
+      return this.question.fromAddress;
+    },
     questions() {
       return this.$store.state.questions;
     },
   },
   methods: {
     createNewQuestion() {
-      this.$store.dispatch("addQuestion", this.question);
+      let data = { ...this.question };
+      data.fromUser = this.userEmail;
+      data.fromAddress = this.metamask;
+      this.$store.dispatch("addQuestion", data);
       this.dialog = false;
     },
     ...mapActions({
-      deleteAllQuestion: "deleteAllQuestion"
-    })
+      deleteAllQuestion: "deleteAllQuestion",
+    }),
   },
   created() {
     this.$store.dispatch("bindQuestions");

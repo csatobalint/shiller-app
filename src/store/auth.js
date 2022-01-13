@@ -6,7 +6,8 @@ const auth = {
 
 	state: {
         isAuthenticated: false,
-        user: null
+        user: null,
+        metamask: null
     },
 
     getters: {
@@ -29,20 +30,24 @@ const auth = {
         state.user = null;
         state.isAuthenticated = false;
         localStorage.removeItem('isAuthenticated')
+      },
+      SET_METAMASK(state,data){
+        state.metamask = data
       }
     },
     actions: {
-      fetchUser({ commit }, user) {
+      fetchUser({ commit, state }, user) {
         commit("SET_LOGGED_IN", user !== null);
 
         if(user.providerData[0] !== null){
             let userProfile = {
               ...user.providerData[0],
             }
+            userProfile.metamask = state.metamask
             db
             .collection('users')
             .doc(user.email)
-            .set(userProfile)
+            .update(userProfile)
             .then(() => {
               commit("SET_USER", userProfile);
             })
@@ -52,6 +57,19 @@ const auth = {
       },
       clearUser({commit}){
         commit("DELETE_USER");
+      },
+      updateMetamask({commit, state}, metamask){
+        commit("SET_METAMASK",metamask);
+        if(state.user){
+          db
+          .collection('users')
+          .doc(state.user.email)
+          .update({metamask: state.metamask})
+          .then((data) => {
+            console.log(data)
+          })
+        }
+        
       }
     }
 };

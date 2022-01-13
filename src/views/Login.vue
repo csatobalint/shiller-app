@@ -80,12 +80,10 @@ export default {
     }),
   },
   watch: {
-    user: function (newUser, oldUser) {
+    user: function (newUser) {
       this.$router.replace({ name: "app" });
       if (newUser) {
-        console.log(`logged in as ${newUser}`);
-      } else {
-        console.log(`logged out as ${oldUser}`);
+        console.log(`logged in as ${newUser.displayName}`);
       }
     },
   },
