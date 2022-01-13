@@ -13,10 +13,9 @@
       >
         {{ link.label }}
       </v-btn> -->
-      <v-btn text rounded to="/login" v-if="!isAuthenticated">Login</v-btn>
       <v-btn text rounded to="/app" v-if="isAuthenticated">App</v-btn>
       <v-btn text rounded @click="signOut" v-if="isAuthenticated">Logout</v-btn>
-      <template v-if="isAuthenticated">
+      <template v-if="isAuthenticated && user !== null">
         <v-avatar v-if="user.photoURL">
           <img :src="user.photoURL" />
         </v-avatar>
@@ -31,14 +30,9 @@
           <v-col cols="2" v-if="isAuthenticated">
             <v-sheet rounded="lg">
               <v-list color="transparent">
-                <v-list-item link :to="{ name: 'new_question' }">
+                <v-list-item link :to="{ name: 'questions' }">
                   <v-list-item-content>
-                    <v-list-item-title> New question </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-list-item link :to="{ name: 'list_questions' }">
-                  <v-list-item-content>
-                    <v-list-item-title> My questions </v-list-item-title>
+                    <v-list-item-title> Questions </v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
 
@@ -55,7 +49,7 @@
 
           <v-col>
             <v-sheet rounded="lg">
-              <v-container v-if="isAuthenticated">
+              <v-container v-if="isAuthenticated && user !== null">
                 <v-row>
                   <v-col cols="8">
                     <h1>Logged in as {{ user.displayName }}</h1>
@@ -133,6 +127,10 @@ export default {
             name: "login",
           });
         });
+    },
+    isMetaMaskInstalled() {
+      const { ethereum } = window;
+      return Boolean(ethereum && ethereum.isMetaMask);
     },
   },
 };

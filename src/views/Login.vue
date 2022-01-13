@@ -1,5 +1,12 @@
 <template>
   <v-container>
+    <v-row v-if="error">
+      <v-col>
+        <v-alert border="top" color="red lighten-2" dark>
+          {{ error }}
+        </v-alert>
+      </v-col>
+    </v-row>
     <v-row>
       <v-card width="400" class="mx-auto mt-5">
         <v-card-title>
@@ -24,7 +31,7 @@
         </v-card-text>
         <v-divider></v-divider>
         <v-card-actions>
-          <v-btn color="success" to="/register">Register</v-btn>
+          <v-btn text color="success" to="/register">Switch to Register</v-btn>
           <v-spacer></v-spacer>
           <v-btn color="info" @click="submitLoginForm">Login</v-btn>
         </v-card-actions>
@@ -72,6 +79,16 @@ export default {
       isAuthenticated: "auth/isAuthenticated",
     }),
   },
+  watch: {
+    user: function (newUser, oldUser) {
+      this.$router.replace({ name: "app" });
+      if (newUser) {
+        console.log(`logged in as ${newUser}`);
+      } else {
+        console.log(`logged out as ${oldUser}`);
+      }
+    },
+  },
   methods: {
     submitLoginForm() {
       firebase
@@ -79,7 +96,7 @@ export default {
         .signInWithEmailAndPassword(this.email, this.password)
         .then((res) => {
           console.log(res.user.email);
-          this.$router.replace({ name: "app" });
+          //this.$router.replace({ name: "app" });
         })
         .catch((err) => {
           this.error = err.message;
@@ -92,7 +109,7 @@ export default {
         .auth()
         .getRedirectResult()
         .then(() => {
-          this.$router.replace({ name: "app" });
+          //this.$router.replace({ name: "app" });
         })
         .catch((error) => {
           alert(error);

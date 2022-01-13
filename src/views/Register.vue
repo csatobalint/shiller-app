@@ -37,6 +37,8 @@
         <v-divider></v-divider>
         <v-card-actions>
           <v-btn color="success" @click="signUp">Register</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn text color="info" to="login">Switch to Login</v-btn>
         </v-card-actions>
       </v-card>
     </v-row>

@@ -1,3 +1,6 @@
+console.log("auth.js")
+import { db } from './firebase'
+
 const auth = {
 	namespaced: true,
 
@@ -20,10 +23,12 @@ const auth = {
       },
       SET_USER(state, data) {
         state.user = data;
+        localStorage.setItem('isAuthenticated', true)
       },
       DELETE_USER(state){
         state.user = null;
         state.isAuthenticated = false;
+        localStorage.removeItem('isAuthenticated')
       }
     },
     actions: {
@@ -31,7 +36,16 @@ const auth = {
         commit("SET_LOGGED_IN", user !== null);
 
         if(user.providerData[0] !== null){
-            commit("SET_USER", user.providerData[0]);
+            let userProfile = {
+              ...user.providerData[0],
+            }
+            db
+            .collection('users')
+            .doc(user.email)
+            .set(userProfile)
+            .then(() => {
+              commit("SET_USER", userProfile);
+            })
         }else {
             commit("SET_USER", null);
         }
