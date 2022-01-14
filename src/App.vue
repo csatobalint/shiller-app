@@ -149,8 +149,7 @@ export default {
   name: "App",
   data() {
     return {
-      contractAddress:
-        "0xC5A381a1285D54C66B3eA9983F76f79F7116d1f4".toLowerCase(),
+      contractAddress: process.env.VUE_APP_CONTRACT_ADDRESS.toLowerCase(),
       connectWalletButtonText: "Connect to wallet",
       connectWalletButtonDisabled: false,
       showMenu: false,
@@ -168,7 +167,7 @@ export default {
       userName: "auth/userName",
     }),
     onboarding() {
-      let url = "http://localhost:8080/" + this.$route.fullPath;
+      let url = process.env.VUE_APP_NOT_SECRET_CODE + this.$route.fullPath;
       return new MetaMaskOnboarding({ url });
     },
     isMetaMaskInstalled() {
@@ -222,7 +221,7 @@ export default {
           this.connectWalletButtonText = metamaskShortText;
         } else {
           this.connectWalletButtonText =
-            "Not able to get accounts. Click here to try again.";
+            "Connect to wallet";
         }
       }
     },

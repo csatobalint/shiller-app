@@ -32,7 +32,8 @@ export default new Vuex.Store({
         return value
       });
       return data
-    }
+    },
+    getQuestions: state => state.questions
   },
   mutations: {
     ...vuexfireMutations,
@@ -43,6 +44,7 @@ export default new Vuex.Store({
     }),
     addQuestion: firestoreAction((context, payload) => {
         return db.collection('questions').add(payload)
+        //return db.collection('questions').doc(Timestamp.now().seconds).add(payload)
     }),
     deleteQuestion: firestoreAction((context, payload) => {
         db.collection('questions')
