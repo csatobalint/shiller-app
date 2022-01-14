@@ -11,8 +11,29 @@ import auth from "./auth.js";
 export default new Vuex.Store({
   state: {
     questions: [],
+    users: [],
   },
-
+  getters: {
+    getUserMetamaskDictionary: state => {
+      const key = "userName"
+      const value = "metamask"
+      const initialValue = {};
+      return state.users.reduce((acc, item) => {
+        acc[item[key]] = item[value]
+        return acc
+      }, initialValue);
+    },
+    getShortQuestions: state => {
+      let data = JSON.parse ( JSON.stringify ( state.questions) )
+      data.map((value) => {
+        value.description = value.description.slice(0,6) + '...'
+        value.fromAddress = value.fromAddress.slice(0,6) + '...'
+        value.toAddress = value.toAddress.slice(0,6) + '...'
+        return value
+      });
+      return data
+    }
+  },
   mutations: {
     ...vuexfireMutations,
   },
@@ -28,6 +49,11 @@ export default new Vuex.Store({
             .doc(payload)
             .delete()
     }),
+    updateQuestion: firestoreAction((context, payload) => {
+        db.collection('questions')
+            .doc(payload.id)
+            .set(payload)
+    }),
     deleteAllQuestion() {
         db.collection("questions")
         .get()
@@ -37,8 +63,19 @@ export default new Vuex.Store({
           });
         });
     },
-    updateQuestion: firestoreAction((context, payload) => {
-        db.collection('questions')
+    bindUsers: firestoreAction(({ bindFirestoreRef }) => {
+      return bindFirestoreRef('users', db.collection('users'))
+    }),
+    addUser: firestoreAction((context, payload) => {
+        return db.collection('users').add(payload)
+    }),
+    deleteUser: firestoreAction((context, payload) => {
+        db.collection('users')
+            .doc(payload)
+            .delete()
+    }),
+    updateUser: firestoreAction((context, payload) => {
+        db.collection('users')
             .doc(payload.id)
             .set(payload)
     }),

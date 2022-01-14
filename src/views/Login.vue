@@ -81,7 +81,7 @@ export default {
   },
   watch: {
     user: function (newUser) {
-      this.$router.replace({ name: "app" });
+      this.$router.replace({ name: "home" });
       if (newUser) {
         console.log(`logged in as ${newUser.displayName}`);
       }
@@ -102,11 +102,22 @@ export default {
     },
     signInWithTwitter() {
       var provider = new firebase.auth.TwitterAuthProvider();
-      firebase.auth().signInWithPopup(provider);
+      firebase
+        .auth()
+        .signInWithPopup(provider)
+        .then((userCredential) => {
+          // Get the Twitter screen name.
+          this.$store.dispatch("auth/updateUserName", userCredential.additionalUserInfo.username);
+        })
+        .catch((error) => {
+          alert(error);
+          return;
+        });
       firebase
         .auth()
         .getRedirectResult()
         .then(() => {
+          //console.log(res.user.additionalUserInfo);
           //this.$router.replace({ name: "app" });
         })
         .catch((error) => {

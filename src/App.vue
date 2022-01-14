@@ -26,7 +26,6 @@
                 ><v-icon dark> mdi-account-circle </v-icon>
               </v-avatar>
             </template>
-
             <v-list>
               <v-list-item>
                 <v-list-item-avatar>
@@ -37,12 +36,13 @@
                     ><v-icon dark> mdi-account-circle </v-icon>
                   </v-avatar>
                 </v-list-item-avatar>
+                <v-list-item-content>{{ userName }}</v-list-item-content>
               </v-list-item>
 
               <v-list-item link>
                 <v-list-item-content>
                   <v-list-item-title class="text-h6">
-                    {{ user.displayName }}
+                     {{ user.displayName }}
                   </v-list-item-title>
                   <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
                 </v-list-item-content>
@@ -100,7 +100,7 @@
             </v-sheet>
           </v-col>
 
-          <v-col>
+          <v-col cols="10">
             <v-sheet rounded="lg">
               <v-container v-if="isAuthenticated && user !== null">
                 <v-row>
@@ -165,6 +165,7 @@ export default {
     ...mapGetters({
       user: "auth/user",
       isAuthenticated: "auth/isAuthenticated",
+      userName: "auth/userName",
     }),
     onboarding() {
       let url = "http://localhost:8080/" + this.$route.fullPath;
@@ -213,14 +214,15 @@ export default {
       if (ethereum) {
         const accounts = await ethereum.request({ method: "eth_accounts" });
 
-        if (accounts[0]) {
+        if (accounts[0] !== undefined) {
           let metamask = accounts[0];
           this.$store.dispatch("auth/updateMetamask", metamask);
           let metamaskShortText =
             metamask.slice(0, 5) + "..." + metamask.slice(-4);
           this.connectWalletButtonText = metamaskShortText;
         } else {
-          this.connectWalletButtonText = "Not able to get accounts";
+          this.connectWalletButtonText =
+            "Not able to get accounts. Click here to try again.";
         }
       }
     },

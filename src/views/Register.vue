@@ -3,7 +3,7 @@
     <v-row v-if="error">
       <v-col>
         <v-alert border="top" color="red lighten-2" dark>
-         {{error}}
+          {{ error }}
         </v-alert>
       </v-col>
     </v-row>
@@ -16,8 +16,13 @@
           <v-form>
             <v-text-field
               label="Name"
-              prepend-icon="mdi-account"
+              prepend-icon="mdi-book"
               v-model="displayName"
+            />
+            <v-text-field
+              label="Username"
+              prepend-icon="mdi-account"
+              v-model="userName"
             />
             <v-text-field
               label="Email"
@@ -56,6 +61,7 @@ export default {
       email: "",
       password: "",
       displayName: "",
+      userName: "",
       showPassword: false,
       error: null,
     };
@@ -66,24 +72,47 @@ export default {
       isAuthenticated: "auth/isAuthenticated",
     }),
   },
+  watch: {
+    user: function (newUser) {
+      this.$router.replace({ name: "home" });
+      if (newUser) {
+        console.log(`logged in as ${newUser.displayName}`);
+      }
+    },
+  },
   methods: {
-    signUp() {
-      firebase
-        .auth()
-        .createUserWithEmailAndPassword(this.email, this.password)
-        .then((data) => {
-          data.user
-            .updateProfile({
-              displayName: this.displayName,
-            })
-            .then(() => {
-              this.$store.dispatch("fetchUser", data.user);
-              this.$router.replace({ name: "app" });
-            });
-        })
-        .catch((err) => {
-          this.error = err.message;
-        });
+    async signUp() {
+      const userDoc = await firebase
+        .firestore()
+        .collection("users")
+        .where("userName", "==", this.userName)
+        .get();
+      let isUsername = userDoc.empty;
+      if (!isUsername) {
+        this.error =
+          "This username has been already taken. Please choose a different one.";
+        return null;
+      } else if (this.userName == "") {
+        this.error = "The username cannot be empty.";
+        return null;
+      } else {
+        await firebase
+          .auth()
+          .createUserWithEmailAndPassword(this.email, this.password)
+          .then((data) => {
+            data.user
+              .updateProfile({
+                displayName: this.displayName,
+              })
+              .then(() => {
+                this.$store.dispatch("auth/updateUserName", this.userName);
+                this.$store.dispatch("auth/fetchUser", data.user);
+              });
+          })
+          .catch((err) => {
+            this.error = err.message;
+          });
+      }
     },
   },
 };
