@@ -2,6 +2,13 @@
   <v-container>
     <v-row>
       <v-col>
+        <v-btn color="secondary" @click="makeNewWithEtherJs">
+          makeNew with ether.js
+        </v-btn>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-col>
         <v-dialog v-model="dialog" persistent max-width="600px">
           <template v-slot:activator="{ on, attrs }">
             <v-btn color="primary" dark v-bind="attrs" v-on="on">
@@ -127,7 +134,7 @@
                   </template>
                   <span>{{ question.toAddress }}</span>
                 </v-tooltip>
-                 - id: {{question.id}}
+                - id: {{ question.id }}
               </div>
               <p class="text-h4 text--primary">{{ question.title }}</p>
               <p>{{ question.bid }} ETC</p>
@@ -136,7 +143,13 @@
               </div>
             </v-card-text>
             <v-card-actions>
-              <v-btn text color="green accent-4" @click="contractOnReward(question.id)"> Reward </v-btn>
+              <v-btn
+                text
+                color="green accent-4"
+                @click="contractOnReward(question.id)"
+              >
+                Reward
+              </v-btn>
               <v-btn
                 text
                 color="red accent-4"
@@ -153,6 +166,7 @@
 </template>
 
 <script>
+import { ethers } from "ethers";
 const { ethereum } = window;
 import { mapGetters, mapActions, mapState } from "vuex";
 
@@ -183,6 +197,8 @@ export default {
         fromAddress: "",
         toAddress: "",
       },
+      provider: null,
+      contract: null,
     };
   },
   computed: {
@@ -238,6 +254,36 @@ export default {
     autoFillToAddress() {
       this.question.toAddress = this.toMetamaskAuto;
     },
+    async makeNewWithEtherJs() {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum,
+        "any"
+      );
+      // Prompt user for account connections
+      await provider.send("eth_requestAccounts", []);
+      console.log(provider);
+
+      const signer = provider.getSigner();
+      console.log("Account:", await signer.getAddress());
+
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        signer
+      );
+      console.log(this.contract);
+
+      const data = await contract.populateTransaction.makeNew(
+        "0x13c5db04644f9cfe79c79bbb1a74aab9a04c98ea", // toAddress
+        this.question.description, //question text
+        120 // time limit [s]
+      );
+      data.value = 0;
+      console.log(data);
+
+      const response = await signer.populateTransaction(data);
+      signer.sendTransaction(response);
+    },
     async contractMakeNew() {
       const txData =
         "0x9f771369" +
@@ -245,7 +291,7 @@ export default {
         this.paddedHex(12, 64); // methodhash (8 hex digits) + address of solver of the question + question id  (64 hex digits/argument)
       console.log(txData);
       const accounts = await ethereum.request({ method: "eth_accounts" });
-      console.log(this.question.id)
+      console.log(this.question.id);
       const txParams = {
         to: process.env.VUE_APP_CONTRACT_ADDRESS,
         from: accounts[0],
@@ -273,7 +319,7 @@ export default {
       const txParams = {
         to: process.env.VUE_APP_CONTRACT_ADDRESS,
         from: accounts[0],
-        data: "0x12d29ac5"
+        data: "0x12d29ac5",
       };
       console.log(txParams);
       try {
@@ -304,6 +350,7 @@ export default {
   created() {
     this.$store.dispatch("bindQuestions");
     this.$store.dispatch("bindUsers");
+    //this.makeNewWithEtherJs();
   },
 };
 </script>
