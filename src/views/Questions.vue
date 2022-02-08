@@ -5,6 +5,12 @@
         <v-btn color="secondary" @click="makeNewWithEtherJs">
           makeNew with ether.js
         </v-btn>
+        <v-btn color="secondary" @click="withdrawExpiredBidWithEtherJs">
+          withdrawExpiredBid with ether.js
+        </v-btn>
+        <v-btn color="secondary" @click="withdrawExpiredBidWithEtherJs">
+          RewardSolvedBid with ether.js
+        </v-btn>
       </v-col>
     </v-row>
     <v-row>
@@ -284,6 +290,137 @@ export default {
       const response = await signer.populateTransaction(data);
       signer.sendTransaction(response);
     },
+    async withdrawExpiredBidWithEtherJs() {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum,
+        "any"
+      );
+      // Prompt user for account connections
+      await provider.send("eth_requestAccounts", []);
+      console.log(provider);
+
+      const signer = provider.getSigner();
+      console.log("Account:", await signer.getAddress());
+
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        signer
+      );
+      console.log(this.contract);
+
+      const data = await contract.populateTransaction.withdrawExpiredBid(
+        this.question.description //question text
+      );
+      data.value = 0;
+      console.log(data);
+
+      const response = await signer.populateTransaction(data);
+      signer.sendTransaction(response);
+    },
+    async rewardSolvedBidWithEtherJs() {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum,
+        "any"
+      );
+      // Prompt user for account connections
+      await provider.send("eth_requestAccounts", []);
+      console.log(provider);
+
+      const signer = provider.getSigner();
+      console.log("Account:", await signer.getAddress());
+
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        signer
+      );
+      console.log(this.contract);
+
+      const data = await contract.populateTransaction.RewardSolvedBid(
+        this.question.description, //question text
+        "answer text" //question text
+      );
+      data.value = 0;
+      console.log(data);
+
+      const response = await signer.populateTransaction(data);
+      signer.sendTransaction(response);
+    },
+    async getBidWithEtherJs() {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum,
+        "any"
+      );
+      // Prompt user for account connections
+      await provider.send("eth_requestAccounts", []);
+      console.log(provider);
+
+      const signer = provider.getSigner();
+      console.log("Account:", await signer.getAddress());
+      let from = await signer.getAddress();
+
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        provider
+      );
+      console.log(contract);
+
+      let options = {
+        gasPrice: 5000000000,
+        gasLimit: 1000000,
+        //nonce: 0,
+        from: from
+      }
+      const data = await contract.getBid(
+        "asd", //question text
+        options
+      );
+      //data.gasLimit = "0x" + this.paddedHex(1000000, 64)
+      //data.gasPrice = "0x" + this.paddedHex(5000000000, 64)
+      // data.gasLimit = 1000000
+      // data.gasPrice = 5000000000
+      console.log(data);
+
+      const response = await provider.call(data);
+      console.log(response);
+    },
+    async getBidsContractWithEtherJs() {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum,
+        "any"
+      );
+      // Prompt user for account connections
+      await provider.send("eth_requestAccounts", []);
+      console.log(provider);
+
+      const signer = provider.getSigner();
+      console.log("Account:", await signer.getAddress());
+      let from = await signer.getAddress();
+
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        provider
+      );
+      console.log(contract);
+
+      let options = {
+        gasPrice: 5000000000,
+        gasLimit: 1000000,
+        //nonce: 0,
+        from: from
+      }
+      const data = await contract.getBidsContract(
+        options
+      );
+  
+      console.log(data);
+
+      const response = await provider.call(data);
+      console.log(response);
+    },
     async contractMakeNew() {
       const txData =
         "0x9f771369" +
@@ -350,7 +487,7 @@ export default {
   created() {
     this.$store.dispatch("bindQuestions");
     this.$store.dispatch("bindUsers");
-    //this.makeNewWithEtherJs();
+    this.getBidsContractWithEtherJs()
   },
 };
 </script>
