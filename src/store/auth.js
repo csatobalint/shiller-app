@@ -63,18 +63,23 @@ const auth = {
         if(state.metaMask === null)
           state.metaMask = {}
         state.metaMask.provider = provider
+        //localStorage.setItem('metaMask', JSON.stringify(state.metaMask))
       },
       SET_METAMASK_ADDRESS(state,address){
         if(state.metaMask === null)
           state.metaMask = {}
         state.metaMask.address = address
+        //localStorage.setItem('metaMask', JSON.stringify(state.metaMask))
       },
       SET_METAMASK_IS_AUTHENTICATED(state){
         state.isMetaMaskAuthenticated = true
+        //localStorage.setItem('isMetaMaskAuthenticated', true)
       },
       DELETE_METAMASK_AUTH(state){
         state.metaMask = null
         state.isMetaMaskAuthenticated = false
+        localStorage.removeItem('metaMask')
+        localStorage.removeItem('isAuthenticated')
       },
     },
     actions: {

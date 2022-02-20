@@ -6,8 +6,8 @@
         <v-row class="py-5">
           <h1>Welcome to Shiller</h1>
         </v-row>
-        <v-row>
-          <v-sheet class="pa-5" rounded="xl" elevation="4" color="foreground">
+        <v-row class="pb-5">
+          <v-sheet class="pa-5" width="100%" rounded="xl" color="foreground1">
             <v-container>
               <v-row>
                 <v-col class="text-left">
@@ -28,7 +28,13 @@
 </template>
 
 <script>
+import {mapGetters} from 'vuex'
 export default {
+  computed: {
+    ...mapGetters({
+      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
+    }),
+  },
   mounted() {},
 };
 </script>

@@ -9,9 +9,12 @@ const bids = {
     },
 
     getters: {
-      myBids(state){
-          return state.myBids
-      }
+        myBids(state){
+            return state.myBids
+        },
+        bidsToMe(state){
+            return state.bidsToMe
+        }
     },
     mutations: {
       SET_MY_BIDS(state, data) {

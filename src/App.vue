@@ -16,10 +16,10 @@
         </v-col>
         <v-col cols="4">
           <div class="d-flex justify-center">
-            <v-btn :to="{ name: 'mybids' }" text large class="mx-1"
+            <v-btn :to="{ name: 'mybids' }" text large class="mx-1" :disabled="!isMetaMaskAuthenticated"
               >My bids</v-btn
             >
-            <v-btn :to="{ name: 'bidstome' }" text large class="mx-1"
+            <v-btn :to="{ name: 'bidstome' }" text large class="mx-1" :disabled="!isMetaMaskAuthenticated"
               >Bids to me</v-btn
             >
           </div>
@@ -324,6 +324,7 @@ export default {
 html {
   overflow-y: auto !important;
 }
+
 .gradientBackgroundColor {
   background: radial-gradient(
     circle,
@@ -342,4 +343,14 @@ html {
   );
   border-bottom: 1px solid rgb(32 34 49)
 }
+.answerQuestionBackground{
+  background: var(--v-answerQuestionBackgroundColor-base);
+  background: linear-gradient(
+    90deg,
+    var(--v-answerQuestionBackgroundColor-base) 0%,
+    var(--v-answerQuestionBackgroundColor-base) 50%,
+    var(--v-answerQuestionBackgroundColor-base) 100%
+  );
+}
+
 </style>

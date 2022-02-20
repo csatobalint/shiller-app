@@ -1,5 +1,6 @@
 console.log('router/index.js')
 import Vue from 'vue'
+import store from './../store'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 //import firebase from "firebase/app"
@@ -46,25 +47,28 @@ const router = new VueRouter({
 })
 
 
-// router.beforeEach((to, from, next) => {
-//   // redirect to login page if user is not logged in and trying to access a restricted page
-//   const publicPages = ['/login', '/register']
-//   const authRequired = !publicPages.includes(to.path)
+ router.beforeEach((to, from, next) => {
+  // redirect to login page if user is not logged in and trying to access a restricted page
+  //const publicPages = ['/login', '/register']
+  const publicPages = ['/']
+  const authRequired = !publicPages.includes(to.path)
 
-//   //const loggedIn = !!firebase.auth()
-//   const loggedIn = localStorage.getItem('isAuthenticated')
+  //const loggedIn = !!firebase.auth()
+  //const loggedIn = localStorage.getItem('isAuthenticated')
+  const loggedIn = store.state.auth.isMetaMaskAuthenticated
 
-//   if (authRequired && !loggedIn) {
-//     return next('/login')
-//   }
+  if (authRequired && !loggedIn) {
+    return next('/')
+    //return next('/login')
+  }
 
-//   next()
+  next()
 
-//   // if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
-//   //   next('/')
-//   // } else {
-//   //   next()
-//   // }
-// })
+  // if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
+  //   next('/')
+  // } else {
+  //   next()
+  // }
+})
 
 export default router
