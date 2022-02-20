@@ -7,11 +7,13 @@ console.log('store/index.js')
 Vue.use(Vuex)
 
 import auth from "./auth.js";
+import bids from "./bids.js";
 
 export default new Vuex.Store({
   state: {
     questions: [],
     users: [],
+    myBids: [],
   },
   getters: {
     getUserMetamaskDictionary: state => {
@@ -83,6 +85,7 @@ export default new Vuex.Store({
     }),
   },
   modules: {
-    auth
+    auth,
+    bids
   }
 })

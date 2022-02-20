@@ -8,7 +8,7 @@
         <v-btn color="secondary" @click="withdrawExpiredBidWithEtherJs">
           withdrawExpiredBid with ether.js
         </v-btn>
-        <v-btn color="secondary" @click="withdrawExpiredBidWithEtherJs">
+        <v-btn color="secondary" @click="rewardSolvedBidWithEtherJs">
           RewardSolvedBid with ether.js
         </v-btn>
       </v-col>
@@ -335,11 +335,11 @@ export default {
         process.env.VUE_APP_ABI,
         signer
       );
-      console.log(this.contract);
+      console.log(contract);
 
       const data = await contract.populateTransaction.RewardSolvedBid(
         this.question.description, //question text
-        "answer text" //question text
+        "a" //question text
       );
       data.value = 0;
       console.log(data);
@@ -371,8 +371,8 @@ export default {
         gasPrice: 5000000000,
         gasLimit: 1000000,
         //nonce: 0,
-        from: from
-      }
+        from: from,
+      };
       const data = await contract.getBid(
         "asd", //question text
         options
@@ -410,12 +410,10 @@ export default {
         gasPrice: 5000000000,
         gasLimit: 1000000,
         //nonce: 0,
-        from: from
-      }
-      const data = await contract.getBidsContract(
-        options
-      );
-  
+        from: from,
+      };
+      const data = await contract.getBidsContract(options);
+
       console.log(data);
 
       const response = await provider.call(data);
@@ -487,7 +485,7 @@ export default {
   created() {
     this.$store.dispatch("bindQuestions");
     this.$store.dispatch("bindUsers");
-    this.getBidsContractWithEtherJs()
+    //this.getBidsContractWithEtherJs()
   },
 };
 </script>

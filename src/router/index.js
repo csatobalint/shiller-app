@@ -27,6 +27,16 @@ const routes = [
    name: 'questions',
    component: () => import('../views/Questions.vue'),
   },
+  {
+    path: '/mybids',
+    name: 'mybids',
+    component: () => import('../views/MyBids.vue'),
+   },
+   {
+    path: '/bidstome',
+    name: 'bidstome',
+    component: () => import('../views/BidsToMe.vue'),
+   },
 ]
 
 const router = new VueRouter({
@@ -35,25 +45,26 @@ const router = new VueRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
-  // redirect to login page if user is not logged in and trying to access a restricted page
-  const publicPages = ['/login', '/register']
-  const authRequired = !publicPages.includes(to.path)
 
-  //const loggedIn = !!firebase.auth()
-  const loggedIn = localStorage.getItem('isAuthenticated')
+// router.beforeEach((to, from, next) => {
+//   // redirect to login page if user is not logged in and trying to access a restricted page
+//   const publicPages = ['/login', '/register']
+//   const authRequired = !publicPages.includes(to.path)
 
-  if (authRequired && !loggedIn) {
-    return next('/login')
-  }
+//   //const loggedIn = !!firebase.auth()
+//   const loggedIn = localStorage.getItem('isAuthenticated')
 
-  next()
+//   if (authRequired && !loggedIn) {
+//     return next('/login')
+//   }
 
-  // if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
-  //   next('/')
-  // } else {
-  //   next()
-  // }
-})
+//   next()
+
+//   // if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
+//   //   next('/')
+//   // } else {
+//   //   next()
+//   // }
+// })
 
 export default router

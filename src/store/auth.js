@@ -4,11 +4,15 @@ import { db } from './firebase'
 const auth = {
 	namespaced: true,
 
-	state: {
+    state: {
         isAuthenticated: false,
-        user: null,
+        isMetaMaskAuthenticated: false,
+        user: {
+          
+        },
         metamask: null,
         userName: localStorage.getItem('userName'),
+        metaMask: null
     },
 
     getters: {
@@ -20,6 +24,18 @@ const auth = {
       },
       isAuthenticated(state){
           return state.isAuthenticated
+      },
+      metaMaskProvider(state){
+        return state.metaMask.provider
+      },
+      metaMaskSigner(state){
+        return state.metaMask.provider.getSigner()
+      },
+      metaMaskAddress(state){
+        return state.metaMask.address
+      },
+      isMetaMaskAuthenticated(state){
+        return state.isMetaMaskAuthenticated
       }
     },
     mutations: {
@@ -42,7 +58,24 @@ const auth = {
       SET_USERNAME(state,data){
         state.userName = data
         localStorage.setItem('userName', data)
-      }
+      },
+      SET_METAMASK_PROVIDER(state,provider){
+        if(state.metaMask === null)
+          state.metaMask = {}
+        state.metaMask.provider = provider
+      },
+      SET_METAMASK_ADDRESS(state,address){
+        if(state.metaMask === null)
+          state.metaMask = {}
+        state.metaMask.address = address
+      },
+      SET_METAMASK_IS_AUTHENTICATED(state){
+        state.isMetaMaskAuthenticated = true
+      },
+      DELETE_METAMASK_AUTH(state){
+        state.metaMask = null
+        state.isMetaMaskAuthenticated = false
+      },
     },
     actions: {
       async fetchUser({ commit, state }, user) {
@@ -109,6 +142,13 @@ const auth = {
           })
         }
       },
+      updateMetaMaskProvider({commit}, provider){
+        commit('SET_METAMASK_PROVIDER',provider)
+      },
+      updateMetaMaskAddress({commit}, address){
+        commit('SET_METAMASK_ADDRESS',address)
+        commit('SET_METAMASK_IS_AUTHENTICATED')
+      }
     }
 };
 

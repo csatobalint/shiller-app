@@ -1,16 +1,56 @@
 <template>
   <v-app>
-    <v-app-bar app primary>
-      <img :src="require('./assets/logo.svg')" class="mr-3" height="30" />
-      <v-toolbar-title>Shiller Crypto App</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn text rounded v-if="isMetaMaskInstalled" @click="onClickConnect">{{
-        connectWalletButtonText
-      }}</v-btn>
-      <v-btn text rounded v-else @click="onClickInstall">{{
-        connectWalletButtonText
-      }}</v-btn>
-      <template v-if="isAuthenticated && user !== null">
+    <v-app-bar app elevation="0" class="gradientAppBarColor">
+      <v-row>
+        <v-col cols="4">
+          <div class="d-flex justfiy-start">
+            <img
+              :src="require('./assets/logo-' + this.colorMode + '.png')"
+              class="mr-3"
+              height="40"
+            />
+            <v-toolbar-title>
+              <span style="font-size: 1.4em">Shiller</span>
+            </v-toolbar-title>
+          </div>
+        </v-col>
+        <v-col cols="4">
+          <div class="d-flex justify-center">
+            <v-btn :to="{ name: 'mybids' }" text large class="mx-1"
+              >My bids</v-btn
+            >
+            <v-btn :to="{ name: 'bidstome' }" text large class="mx-1"
+              >Bids to me</v-btn
+            >
+          </div>
+        </v-col>
+        <v-col cols="4">
+          <div class="d-flex justify-end">
+            <v-btn
+              color="primary"
+              rounded
+              outlined
+              @click="connectToMetaMask"
+              :disabled="connectWalletButtonDisabled"
+              :loading="connectWalletButtonDisabled"
+            >
+              {{ metaMaskButtonText }}
+            </v-btn>
+            <v-btn
+              outlined
+              @click="switchDarkMode"
+              class="mx-2"
+              fab
+              small
+              color="primary"
+            >
+              <v-icon v-if="colorMode == 'dark'"> mdi-brightness-5 </v-icon>
+              <v-icon v-else> mdi-brightness-2 </v-icon>
+            </v-btn>
+          </div>
+        </v-col>
+      </v-row>
+      <!-- <template v-if="isAuthenticated && user !== null">
         <template>
           <v-menu v-model="showMenu" absolute offset-y style="max-width: 600px">
             <template v-slot:activator="{ on, attrs }">
@@ -75,12 +115,10 @@
             </v-list>
           </v-menu>
         </template>
-      </template>
+      </template> -->
     </v-app-bar>
-    <v-main class="grey lighten-3">
-      <v-container>
-        <v-row>
-          <v-col cols="2" v-if="isAuthenticated">
+    <v-main class="gradientBackgroundColor">
+      <!-- <v-col cols="2">
             <v-sheet rounded="lg">
               <v-list color="transparent">
                 <v-list-item link :to="{ name: 'questions' }">
@@ -98,44 +136,44 @@
                 </v-list-item>
               </v-list>
             </v-sheet>
-          </v-col>
+          </v-col> -->
+      <div class="text-center">
+        <v-dialog v-model="metaMaskErrorDialog" width="500">
+          <v-card>
+            <v-card-title class="text-h5"> MetaMask message </v-card-title>
 
-          <v-col cols="10">
-            <v-sheet rounded="lg">
-              <v-container v-if="isAuthenticated && user !== null">
-                <v-row>
-                  <v-col cols="8">
-                    <h1>Logged in as {{ user.displayName }}</h1>
-                  </v-col>
-                </v-row>
-              </v-container>
-              <router-view></router-view>
-              <v-row>
-                <v-col></v-col>
-              </v-row>
-            </v-sheet>
-          </v-col>
-        </v-row>
+            <v-card-text>
+              {{ metaMaskErrorText }}
+            </v-card-text>
+
+            <v-divider></v-divider>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="primary"
+                outlined
+                @click="metaMaskErrorDialog = false"
+              >
+                Close
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </div>
+      <!-- Provides the application the proper gutter -->
+      <v-container fluid>
+        <!-- If using vue-router -->
+        <router-view></router-view>
       </v-container>
     </v-main>
-    <v-footer color="blue-grey darken-4 lighten-1" padless>
+    <!-- <v-footer color="blue-grey darken-4 lighten-1" padless>
       <v-layout justify-center wrap>
-        <!-- <v-btn
-          v-for="link in links"
-          :key="`${link.label}-footer-link`"
-          color="white"
-          text
-          rounded
-          class="my-2"
-          :to="link.url"
-        >
-          {{ link.label }}
-        </v-btn> -->
         <v-flex py-4 text-center white--text xs12>
           {{ new Date().getFullYear() }} — <strong>Shiller Crypto</strong>
         </v-flex>
       </v-layout>
-    </v-footer>
+    </v-footer> -->
   </v-app>
 </template>
 
@@ -144,14 +182,17 @@ import { mapGetters } from "vuex";
 import firebase from "firebase";
 import MetaMaskOnboarding from "@metamask/onboarding";
 const { ethereum } = window;
+import { ethers } from "ethers";
 
 export default {
   name: "App",
   data() {
     return {
       contractAddress: process.env.VUE_APP_CONTRACT_ADDRESS.toLowerCase(),
-      connectWalletButtonText: "Connect to wallet",
+      connectWalletButtonText: "Connect to a wallet",
       connectWalletButtonDisabled: false,
+      metaMaskErrorText: "",
+      metaMaskErrorDialog: false,
       showMenu: false,
       selectedItem: 0,
       items: [
@@ -161,20 +202,37 @@ export default {
     };
   },
   computed: {
+    colorMode() {
+      return this.$vuetify.theme.dark ? "dark" : "light";
+    },
     ...mapGetters({
       user: "auth/user",
       isAuthenticated: "auth/isAuthenticated",
       userName: "auth/userName",
+      provider: "auth/metaMaskProvider",
+      signer: "auth/metaMaskSigner",
+      address: "auth/metaMaskAddress",
+      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
     }),
-    onboarding() {
-      let url = process.env.VUE_APP_NOT_SECRET_CODE + this.$route.fullPath;
-      return new MetaMaskOnboarding({ url });
-    },
     isMetaMaskInstalled() {
       return Boolean(ethereum && ethereum.isMetaMask);
     },
+    metaMaskButtonText() {
+      if (this.isMetaMaskInstalled) {
+        if (this.isMetaMaskAuthenticated) {
+          return this.address.slice(0, 5) + "..." + this.address.slice(-4);
+        } else {
+          return "Connect to wallet";
+        }
+      } else {
+        return "Click here to install MetaMask!";
+      }
+    },
   },
   methods: {
+    switchDarkMode() {
+      this.$vuetify.theme.dark = !this.$vuetify.theme.dark;
+    },
     signOut() {
       firebase
         .auth()
@@ -186,13 +244,16 @@ export default {
           });
         });
     },
-
+    // NOT USED
     onClickInstall() {
       this.connectWalletButtonText = "Onboarding in progress";
       this.connectWalletButtonDisabled = true;
       //On this object we have startOnboarding which will start the onboarding process for our end user
-      this.onboarding.startOnboarding();
+      let url = process.env.VUE_APP_FORWARD_ORIGIN + this.$route.fullPath;
+      const onboarding = new MetaMaskOnboarding({ url });
+      onboarding.startOnboarding();
     },
+    // NOT USED
     async onClickConnect() {
       try {
         // Will open the MetaMask UI
@@ -208,39 +269,77 @@ export default {
         console.error(error);
       }
     },
+    async connectToMetaMask() {
+      try {
+        if (this.isMetaMaskInstalled) {
+          // Check if the metamask client is unlocked
+          const isUnlocked = await ethereum._metamask.isUnlocked();
+          if (isUnlocked === false)
+            throw new Error("Please unlock your MetaMask client to proceed.");
 
-    async updateMetamask() {
-      if (ethereum) {
-        const accounts = await ethereum.request({ method: "eth_accounts" });
+          // Get provider object
+          const provider = new ethers.providers.Web3Provider(
+            window.ethereum,
+            "any"
+          );
 
-        if (accounts[0] !== undefined) {
-          let metamask = accounts[0];
-          this.$store.dispatch("auth/updateMetamask", metamask);
-          let metamaskShortText =
-            metamask.slice(0, 5) + "..." + metamask.slice(-4);
-          this.connectWalletButtonText = metamaskShortText;
+          // Prompt user for account connections
+          this.connectWalletButtonDisabled = true;
+          await provider.send("eth_requestAccounts", []);
+          this.connectWalletButtonDisabled = false;
+          this.$store.dispatch("auth/updateMetaMaskProvider", provider);
+          //console.log(provider);
+
+          // Get the signer and address
+          const signer = provider.getSigner();
+          const address = await signer.getAddress();
+          this.$store.dispatch("auth/updateMetaMaskAddress", address);
+          //console.log("Account:", address);
         } else {
-          this.connectWalletButtonText =
-            "Connect to wallet";
+          this.connectWalletButtonDisabled = true;
+          //On this object we have startOnboarding which will start the onboarding process for our end user
+          let url = process.env.VUE_APP_FORWARD_ORIGIN + this.$route.fullPath;
+          const onboarding = new MetaMaskOnboarding({ url });
+          onboarding.startOnboarding();
         }
+      } catch (error) {
+        this.metaMaskErrorDialog = true;
+        if (error.code == -32002) {
+          this.metaMaskErrorText =
+            "Connection to the MetaMask wallet has been already requested. Check your MetaMask, you may need to unlock it.";
+        } else {
+          this.metaMaskErrorText = error.message;
+        }
+        console.log(error);
       }
     },
   },
   mounted() {
-    //Now we check to see if MetaMask is installed
-    if (!this.isMetaMaskInstalled) {
-      //If it isn't installed we ask the user to click to install it
-      this.connectWalletButtonText = "Click here to install MetaMask!";
-      //The button is now disabled
-      this.connectWalletButtonDisabled = false;
-    } else {
-      //If it is installed we change our button text
-      this.connectWalletButtonText = "Connect to wallet";
-      //The button is now disabled
-      this.connectWalletButtonDisabled = false;
-    }
-
-    this.updateMetamask();
+    this.connectToMetaMask();
   },
 };
 </script>
+
+<style lang="scss">
+html {
+  overflow-y: auto !important;
+}
+.gradientBackgroundColor {
+  background: radial-gradient(
+    circle,
+    var(--v-backgroundColor1-base) 0%,
+    var(--v-backgroundColor2-base) 50%,
+    var(--v-backgroundColor3-base) 100%
+  );
+}
+.gradientAppBarColor {
+  background: var(--v-appbarColor1-base);
+  background: linear-gradient(
+    90deg,
+    var(--v-appbarColor1-base) 0%,
+    var(--v-appbarColor1-base) 50%,
+    var(--v-appbarColor1-base) 100%
+  );
+  border-bottom: 1px solid rgb(32 34 49)
+}
+</style>
