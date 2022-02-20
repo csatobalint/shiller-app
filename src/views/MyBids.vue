@@ -1,7 +1,7 @@
 <template>
   <v-container class="pt-10">
     <v-row>
-      <v-col></v-col>
+      <v-col ></v-col>
       <v-col cols="8">
         <v-row class="py-5">
           <v-col><h1>My Bids</h1> </v-col>
@@ -77,18 +77,23 @@
           <template v-if="!item[1]">
             <v-row :key="index" class="pb-5">
               <v-card class="rounded-xl pa-2" :class="[item[2] ? 'answerQuestionBackground' : '']" width="100%">
+                <v-card-subtitle class="pl-5">
+                  {{ item[4] | hexToDate }}
+                </v-card-subtitle>
                 <v-card-text >
+                  Question
                   <v-card :style="questionAnswerCardBackgroundColor" class="rounded-lg mb-2" outlined width="100%">
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col> Q: {{ item[8] }} </v-col>
+                        <v-col>{{ item[8] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
+                  <span v-if="item[0]">Answer</span>
                   <v-card :style="questionAnswerCardBackgroundColor" class="rounded-lg" outlined width="100%" v-if="item[0]">
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col> A: {{ item[2] }} </v-col>
+                        <v-col> {{ item[2] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
@@ -107,15 +112,13 @@
                     <v-col class="text-right">{{ parseInt(item[5])/1e18 }} ETH </v-col>
                   </v-row>
                 </v-card-title>
-                <v-card-subtitle class="pl-5">
-                  {{ item[4] | hexToDate }}
-                </v-card-subtitle>
+                
                 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <v-col cols="" v-if="!item[2]" class="text-body-2">
-                      Due at: {{ dueDate(item[4],item[3]) }}
-                    </v-col>
+                    <!-- <v-col cols="" v-if="!item[2]" class="text-body-2">
+                      Locked until: {{ dueDate(item[4],item[3]) }}
+                    </v-col> -->
                     <v-col cols="" class="text-right">
                       <v-btn v-if="!item[2]" color="seondary" outlined @click="withdrawExpiredBidWithEtherJs(item[8])">Withdraw</v-btn>
                     </v-col>

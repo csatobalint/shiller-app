@@ -15,7 +15,11 @@
           <template v-if="!item[1]">
             <v-row :key="index" class="pb-5">
               <v-card class="rounded-xl pa-2" :class="[item[2] ? 'answerQuestionBackground' : '']" width="100%">
+                 <v-card-subtitle class="pl-5">
+                  {{ item[4] | hexToDate }}
+                </v-card-subtitle>
                 <v-card-text >
+                  <span>Question</span>
                   <v-card :style="questionAnswerCardBackgroundColor" class="rounded-lg mb-2" outlined width="100%">
                     <v-card-text class="text-body-1">
                       <v-row>
@@ -23,6 +27,7 @@
                       </v-row>
                     </v-card-text>
                   </v-card>
+                  <span>Answer</span>
                   <v-card :style="questionAnswerCardBackgroundColor" class="rounded-lg" outlined width="100%" v-if="item[0]">
                     <v-card-text class="text-body-1">
                       <v-row>
@@ -36,7 +41,7 @@
                         <v-col> 
                           <v-textarea
                             name="answer"
-                            label="Answer"
+                            label=""
                             v-model="answers[item[8]]"
                           ></v-textarea>
                         </v-col>
@@ -51,15 +56,13 @@
                     <v-col class="text-right">{{ parseInt(item[5])/1e18 }} ETH </v-col>
                   </v-row>
                 </v-card-title>
-                <v-card-subtitle class="pl-5">
-                  {{ item[4] | hexToDate }}
-                </v-card-subtitle>
+               
                 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <v-col cols="" v-if="!item[2]" class="text-body-2">
-                      Due at: {{ dueDate(item[4],item[3]) }}
-                    </v-col>
+                    <!-- <v-col cols="" v-if="!item[2]" class="text-body-2">
+                      Expiries at: {{ dueDate(item[4],item[3]) }}
+                    </v-col> -->
                     <v-col cols="" class="text-right">
                       <v-btn v-if="!item[2]" color="seondary" outlined @click="rewardSolvedBidWithEtherJs(item[8],answers[item[8]])">Send Answer</v-btn>
                     </v-col>

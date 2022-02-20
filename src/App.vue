@@ -17,10 +17,10 @@
         <v-col cols="4">
           <div class="d-flex justify-center">
             <v-btn :to="{ name: 'mybids' }" text large class="mx-1" :disabled="!isMetaMaskAuthenticated"
-              >My bids</v-btn
+              >Ask something</v-btn
             >
             <v-btn :to="{ name: 'bidstome' }" text large class="mx-1" :disabled="!isMetaMaskAuthenticated"
-              >Bids to me</v-btn
+              >Answer questions</v-btn
             >
           </div>
         </v-col>
