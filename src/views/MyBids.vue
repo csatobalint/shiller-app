@@ -95,47 +95,7 @@
             </v-dialog>
           </v-col>
         </v-row>
-        <v-row>
-          <v-col>
-            <v-tabs
-              v-model="tab"
-              background-color="transparent"
-              slider-size="1"
-            >
-              <v-tab v-for="tabItem in tabItems" :key="tabItem.tab">
-                {{ tabItem.tab }}
-              </v-tab>
-            </v-tabs>
-          </v-col>
-          <v-col cols="2" class="d-flex justify-end">
-            <v-spacer></v-spacer>
-            <v-select
-              v-model="sortBy"
-              :items="['Date', 'Bid']"
-              menu-props="auto"
-              label="Select"
-              hide-details
-              single-line
-            >
-            </v-select>
-            <v-tooltip top>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn class="ma-2 align-end" text icon color="">
-                  <v-icon
-                    class=""
-                    @click="changeShortIcon"
-                    text
-                    v-bind="attrs"
-                    v-on="on"
-                  >
-                    {{ sortIcon }}
-                  </v-icon>
-                </v-btn>
-              </template>
-              <span>Change sort direction</span>
-            </v-tooltip>
-          </v-col>
-        </v-row>
+        <Tab :tab-items="[{ 'tab': 'Answered' }, { 'tab': 'Pending' }, { 'tab': 'All' }]"></Tab>
         <template v-for="(item, index) in sortedBids">
           <template>
             <v-row :key="index" class="pb-5">
@@ -144,11 +104,11 @@
                 :class="[item[2] ? 'answerQuestionBackground' : '']"
                 width="100%"
               >
-                <v-card-subtitle class="pl-5">
-                  {{ item[4] | hexToDate }}
+                <v-card-subtitle class="pl-5 d-flex justify-space-between">
+                  <span>Question</span>
+                  <span>{{ item[4] | hexToDate }}</span>
                 </v-card-subtitle>
                 <v-card-text>
-                  Question
                   <v-card
                     :style="questionAnswerCardBackgroundColor"
                     class="rounded-lg mb-2"
@@ -161,7 +121,7 @@
                       </v-row>
                     </v-card-text>
                   </v-card>
-                  <span v-if="item[0]">Answer</span>
+                  <div v-if="item[0]" class="my-4">Answer</div>
                   <v-card
                     :style="questionAnswerCardBackgroundColor"
                     class="rounded-lg"
@@ -226,38 +186,14 @@
 
 <script>
 import { mapGetters } from "vuex";
-import { ethers } from "ethers";
+import mixinBids from './components/mixin';
+import Tab from './components/Tab.vue'
 
 export default {
-  filters: {
-    hexToDate: function (hex_unix_timestamp) {
-      let unix_timestamp = parseInt(hex_unix_timestamp);
-      var a = new Date(unix_timestamp * 1000);
-      var months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      var year = a.getFullYear();
-      var month = months[a.getMonth()];
-      var date = a.getDate();
-      var hour = a.getHours();
-      var min = a.getMinutes();
-      var sec = a.getSeconds();
-      var time =
-        date + " " + month + " " + year + " " + hour + ":" + min + ":" + sec;
-      return time;
-    },
+  components: {
+    Tab,
   },
+  mixins: [mixinBids],
   data() {
     return {
       dialog: false,
@@ -267,190 +203,16 @@ export default {
         text: "randomstring_" + Math.random().toString().substr(2, 5),
         timeLimit: 60,
       },
-      tab: 0,
-      tabItems: [{ tab: "Answered" }, { tab: "Pending" }, { tab: "All" }],
-      sortBy: "Date",
-      sortDirection: "desc",
     };
-  },
-  watch: {
-    tab(newValue) {
-      this.$store.dispatch('bids/updateTabFilter',this.tabItems[newValue].tab)
-    }
   },
   computed: {
     ...mapGetters({
-      userName: "auth/userName",
-      provider: "auth/metaMaskProvider",
-      signer: "auth/metaMaskSigner",
-      address: "auth/metaMaskAddress",
-      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
       filteredBids: "bids/filteredMyBids"
     }),
-    sortIcon() {
-      if (this.sortDirection == "desc") {
-        return "mdi-sort-variant";
-      } else {
-        return "mdi-sort-reverse-variant";
-      }
-    },
-    questionAnswerCardBackgroundColor() {
-      if (this.$vuetify.theme.dark) {
-        return {
-          "background-color": "rgba(0,0,0,0.1)",
-        };
-      } else {
-        return {
-          "background-color": "rgba(0,0,0,0.0)",
-        };
-      }
-    },
-    sortedBids(){
-     if(this.sortBy == 'Date' && this.sortDirection == 'desc'){
-       return [...this.filteredBids].sort((a,b) => (a[4]-b[4]))
-     } 
-     else if(this.sortBy == 'Date' && this.sortDirection == 'asc'){
-       return [...this.filteredBids].sort((a,b) => -(a[4]-b[4]))
-     }
-     else if(this.sortBy == 'Bid' && this.sortDirection == 'desc'){
-       return [...this.filteredBids].sort((a,b) => -(a[5]-b[5]))
-     } 
-     else if(this.sortBy == 'Bid' && this.sortDirection == 'asc'){
-       return [...this.filteredBids].sort((a,b) => (a[5]-b[5]))
-     } else{
-       return this.filteredBids
-     }
-    }
-  },
-  methods: {
-    sortFunction(a, b) {
-      if (this.sortDirection == "asc") {
-        return a[4] - b[4];
-      } else if (this.sortDirection == "desc") {
-        return b[4] - a[4];
-      } else {
-        return 0;
-      }
-    },
-    sortByDateFunction() {
-      this.filteredMyBids.sort((a, b) => {
-        if (this.sortDirection == "asc") {
-          return a[4] - b[4];
-        } else if (this.sortDirection == "desc") {
-          return b[4] - a[4];
-        } else {
-          return 0;
-        }
-      }).bind(this);
-    },
-    async getBidWithEtherJs(questionText) {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.provider
-      );
-
-      let options = {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
-        from: this.address,
-      };
-      const data = await contract.getBid(questionText, options);
-      const response = await this.provider.call(data);
-      console.log(data);
-      console.log(response);
-      return data;
-    },
-    async getBidsContractWithEtherJs() {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.provider
-      );
-
-      let options = {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
-        from: this.address,
-      };
-      const data = await contract.getBidsContract(options);
-      const response = await this.provider.call(data);
-      console.log(data);
-      console.log(response);
-      return data;
-    },
-    async updateMyBids() {
-      const ids = await this.getBidsContractWithEtherJs();
-      const bids = [];
-      ids.forEach((id) => {
-        this.getBidWithEtherJs(id).then((res) => {
-          const array = [...res];
-          array.push(id);
-          bids.push(array);
-        });
-      });
-      this.$store.dispatch("bids/updateMyBids", bids);
-    },
-    async makeNewWithEtherJs() {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.signer
-      );
-      console.log(this.contract);
-
-      const data = await contract.populateTransaction.makeNew(
-        this.question.toAddress, // toAddress
-        this.question.text, //question text
-        Math.abs(this.question.timeLimit) // time limit [s]
-      );
-      data.value = ethers.utils.parseEther(this.question.bid.toString());
-      console.log(data);
-
-      const response = await this.signer.populateTransaction(data);
-      this.signer.sendTransaction(response);
-    },
-    async withdrawExpiredBidWithEtherJs(id) {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.signer
-      );
-      console.log(this.contract);
-
-      const data = await contract.populateTransaction.withdrawExpiredBid(
-        id //question text
-      );
-      data.value = 0;
-      console.log(data);
-
-      const response = await this.signer.populateTransaction(data);
-      this.signer.sendTransaction(response);
-    },
-    shortAddress(address) {
-      return address.slice(0, 5) + "..." + address.slice(-4);
-    },
-    dueDate(timestamp, timeLimit) {
-      const shift = timeLimit;
-      const dueStamp = Number(timestamp) + Number(shift);
-      const dueStampHex = "0x" + Number(dueStamp).toString(16);
-      console.log(timestamp);
-      console.log(dueStamp);
-      console.log(dueStampHex);
-
-      return this.$options.filters.hexToDate(dueStampHex);
-    },
-    changeShortIcon() {
-      if (this.sortDirection == "asc") {
-        this.sortDirection = "desc";
-      } else {
-        this.sortDirection = "asc";
-      }
-    },
+    
   },
   mounted() {
     if (this.isMetaMaskAuthenticated) this.updateMyBids();
-    //this.getBidWithEtherJs('asd');
   },
 };
 </script>

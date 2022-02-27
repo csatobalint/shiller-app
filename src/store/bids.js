@@ -6,6 +6,8 @@ const bids = {
     state: {
         myBids: [],
         bidsToMe: [],
+        sortBy: "Date",
+        sortDirection: "desc",
         tabFilter: "",
     },
 
@@ -24,8 +26,16 @@ const bids = {
                 return state.myBids.filter(item => !item[1])
             }
         },
-        bidsToMe(state){
-            return state.bidsToMe
+        filteredBidsToMe(state){
+            if(state.tabFilter == 'Answered'){
+                return state.bidsToMe.filter(item => item[0] && !item[1])
+            }
+            else if (state.tabFilter == 'Pending'){
+                return state.bidsToMe.filter(item => !item[0]  && !item[1])
+            }
+            else{
+                return state.bidsToMe.filter(item => !item[1])
+            }
         }
     },
     mutations: {
@@ -37,6 +47,12 @@ const bids = {
       },
       SET_TAB_FILTER(state, data) {
         state.tabFilter = data;
+      },
+      SET_SORT_BY(state, data) {
+        state.sortBy = data;
+      },
+      SET_SORT_DIRECTION(state, data) {
+        state.sortDirection = data;
       },
     },
     actions: {
@@ -50,6 +66,12 @@ const bids = {
         },
         updateTabFilter({commit},data){
             commit('SET_TAB_FILTER',data);
+        },
+        updateSortBy({commit},data){
+            commit('SET_SORT_BY',data);
+        },
+        updateSortDirection({commit},data){
+            commit('SET_SORT_DIRECTION',data);
         }
     }
 };

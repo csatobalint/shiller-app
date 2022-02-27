@@ -11,7 +11,8 @@
             </v-btn>
           </v-col>
         </v-row>
-        <template v-for="(item, index) in bidsToMe">
+        <Tab :tab-items="[{ 'tab': 'Pending' }, { 'tab': 'Answered' }, { 'tab': 'All' }]"></Tab>
+        <template v-for="(item, index) in sortedBids">
           <template v-if="!item[1]">
             <v-row :key="index" class="pb-5">
               <v-card class="rounded-xl pa-2" :class="[item[2] ? 'answerQuestionBackground' : '']" width="100%">
@@ -80,38 +81,14 @@
 
 <script>
 import { mapGetters } from "vuex";
-import { ethers } from "ethers";
+import mixinBids from './components/mixin';
+import Tab from './components/Tab.vue'
 
 export default {
-  filters: {
-    hexToDate: function (hex_unix_timestamp) {
-      let unix_timestamp = parseInt(hex_unix_timestamp);
-      var a = new Date(unix_timestamp * 1000);
-      var months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ];
-      var year = a.getFullYear();
-      var month = months[a.getMonth()];
-      var date = a.getDate();
-      var hour = a.getHours();
-      var min = a.getMinutes();
-      var sec = a.getSeconds();
-      var time =
-        date + " " + month + " " + year + " " + hour + ":" + min + ":" + sec;
-      return time;
-    },
+  components: {
+    Tab,
   },
+  mixins: [mixinBids],
   data() {
     return {
       answers: {}
@@ -119,123 +96,8 @@ export default {
   },
   computed: {
     ...mapGetters({
-      userName: "auth/userName",
-      provider: "auth/metaMaskProvider",
-      signer: "auth/metaMaskSigner",
-      address: "auth/metaMaskAddress",
-      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
-      bidsToMe: "bids/bidsToMe",
+      filteredBids: "bids/filteredBidsToMe",
     }),
-    questionAnswerCardBackgroundColor(){
-      if (this.$vuetify.theme.dark) {
-        return {
-          'background-color': 'rgba(0,0,0,0.1)',
-        }
-      } else {
-        return {
-          'background-color': 'rgba(0,0,0,0.0)',
-        }
-      }
-    }
-  },
-  methods: {
-    async getBidWithEtherJs(questionText) {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.provider
-      );
-
-      let options = {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
-        from: this.address,
-      };
-      const data = await contract.getBid(questionText, options);
-      const response = await this.provider.call(data);
-      console.log(data);
-      console.log(response);
-      return data;
-    },
-    async getBidsContractWithEtherJs() {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.provider
-      );
-
-      let options = {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
-        from: this.address,
-      };
-      const data = await contract.getBidsContract(options);
-      const response = await this.provider.call(data);
-      console.log(data);
-      console.log(response);
-      return data;
-    },
-    async getBidsBeneficiaryWithEtherJs() {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.provider
-      );
-
-      let options = {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
-        from: this.address,
-      };
-      const data = await contract.getBidsBeneficiary(options);
-      const response = await this.provider.call(data);
-      console.log(data);
-      console.log(response);
-      return data;
-    },
-    async updateBidsToMe() {
-      const ids = await this.getBidsBeneficiaryWithEtherJs();
-      const bids = [];
-      ids.forEach((id) => {
-        this.getBidWithEtherJs(id).then((res) => {
-          const array = [...res];
-          array.push(id);
-          bids.push(array);
-        });
-      });
-      this.$store.dispatch("bids/updateBidsToMe", bids);
-    },
-    async rewardSolvedBidWithEtherJs(id,answer) {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.signer
-      );
-      console.log(contract);
-
-      const data = await contract.populateTransaction.RewardSolvedBid(
-        id, //question text
-        answer
-      );
-      data.value = 0;
-      console.log(data);
-
-      const response = await this.signer.populateTransaction(data);
-      this.signer.sendTransaction(response);
-    },
-    shortAddress(address){
-      return address.slice(0, 5) + "..." + address.slice(-4);
-    },
-    dueDate(timestamp,timeLimit){
-      const shift = timeLimit
-      const dueStamp = Number(timestamp) + Number(shift)
-      const dueStampHex = "0x" + Number(dueStamp).toString(16)
-      console.log(timestamp)
-      console.log(dueStamp)
-      console.log(dueStampHex)
-
-      return this.$options.filters.hexToDate(dueStampHex)
-    }
   },
   mounted() {
     if (this.isMetaMaskAuthenticated) 
