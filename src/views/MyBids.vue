@@ -1,88 +1,160 @@
 <template>
   <v-container class="pt-10">
     <v-row>
-      <v-col ></v-col>
+      <v-col></v-col>
       <v-col cols="8">
-        <v-row class="py-5">
-          <v-col><h1>My Bids</h1> </v-col>
+        <v-row class="py-5 align-center">
+          <v-col class="text-h4">My questions</v-col>
           <v-col class="text-right">
-            <v-btn class="mr-2" fab outlined color="primary" @click="updateMyBids()">
-                <v-icon dark> mdi-refresh </v-icon>
+            <v-btn
+              class="mr-2"
+              fab
+              outlined
+              color="primary"
+              @click="updateMyBids()"
+            >
+              <v-icon dark> mdi-refresh </v-icon>
             </v-btn>
             <v-dialog v-model="dialog" persistent max-width="600px">
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn class="" fab outlined color="primary" dark v-bind="attrs" v-on="on">
-                <v-icon dark> mdi-plus </v-icon>
-              </v-btn>
-            </template>
-            <v-card>
-              <v-card-title>
-                <span class="text-h5">New question</span>
-              </v-card-title>
-              <v-card-text>
-                <v-container>
-                  <v-row>
-                    <v-col cols="12">
-                      <v-text-field
-                        name="to_address"
-                        label="Public address"
-                        id="to_address"
-                        v-model="question.toAddress"
-                        outlined
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12">
-                      <v-textarea
-                        name="text"
-                        label="Text"
-                        v-model="question.text"
-                        outlined
-                      ></v-textarea>
-                    </v-col>
-                    <v-col cols="6">
-                      <v-text-field
-                        name="bid"
-                        label="Bid amount (ETC)"
-                        id="bid"
-                        v-model="question.bid"
-                        outlined
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="6">
-                      <v-text-field
-                        name="time_limit"
-                        label="Time limit (s)"
-                        id="time_limit"
-                        v-model="question.timeLimit"
-                        outlined
-                      ></v-text-field>
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="primary darken-1" outlined @click="dialog = false">
-                  Close
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn
+                  class=""
+                  fab
+                  outlined
+                  color="primary"
+                  dark
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  <v-icon dark> mdi-plus </v-icon>
                 </v-btn>
-                <v-btn color="primary darken-1" outlined @click="makeNewWithEtherJs">
-                  Send
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
+              </template>
+              <v-card>
+                <v-card-title>
+                  <span class="text-h5">New question</span>
+                </v-card-title>
+                <v-card-text>
+                  <v-container>
+                    <v-row>
+                      <v-col cols="12">
+                        <v-text-field
+                          name="to_address"
+                          label="Public address"
+                          id="to_address"
+                          v-model="question.toAddress"
+                          outlined
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12">
+                        <v-textarea
+                          name="text"
+                          label="Text"
+                          v-model="question.text"
+                          outlined
+                        ></v-textarea>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          name="bid"
+                          label="Bid amount (ETC)"
+                          id="bid"
+                          v-model="question.bid"
+                          outlined
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          name="time_limit"
+                          label="Time limit (s)"
+                          id="time_limit"
+                          v-model="question.timeLimit"
+                          outlined
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    color="primary darken-1"
+                    outlined
+                    @click="dialog = false"
+                  >
+                    Close
+                  </v-btn>
+                  <v-btn
+                    color="primary darken-1"
+                    outlined
+                    @click="makeNewWithEtherJs"
+                  >
+                    Send
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </v-col>
         </v-row>
-        <template v-for="(item, index) in myBids">
-          <template v-if="!item[1]">
+        <v-row>
+          <v-col>
+            <v-tabs
+              v-model="tab"
+              background-color="transparent"
+              slider-size="1"
+            >
+              <v-tab v-for="tabItem in tabItems" :key="tabItem.tab">
+                {{ tabItem.tab }}
+              </v-tab>
+            </v-tabs>
+          </v-col>
+          <v-col cols="2" class="d-flex justify-end">
+            <v-spacer></v-spacer>
+            <v-select
+              v-model="sortBy"
+              :items="['Date', 'Bid']"
+              menu-props="auto"
+              label="Select"
+              hide-details
+              single-line
+            >
+            </v-select>
+            <v-tooltip top>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn class="ma-2 align-end" text icon color="">
+                  <v-icon
+                    class=""
+                    @click="changeShortIcon"
+                    text
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    {{ sortIcon }}
+                  </v-icon>
+                </v-btn>
+              </template>
+              <span>Change sort direction</span>
+            </v-tooltip>
+          </v-col>
+        </v-row>
+        <template v-for="(item, index) in sortedBids">
+          <template>
             <v-row :key="index" class="pb-5">
-              <v-card class="rounded-xl pa-2" :class="[item[2] ? 'answerQuestionBackground' : '']" width="100%">
+              <v-card
+                class="rounded-xl pa-2"
+                :class="[item[2] ? 'answerQuestionBackground' : '']"
+                width="100%"
+              >
                 <v-card-subtitle class="pl-5">
                   {{ item[4] | hexToDate }}
                 </v-card-subtitle>
-                <v-card-text >
+                <v-card-text>
                   Question
-                  <v-card :style="questionAnswerCardBackgroundColor" class="rounded-lg mb-2" outlined width="100%">
+                  <v-card
+                    :style="questionAnswerCardBackgroundColor"
+                    class="rounded-lg mb-2"
+                    outlined
+                    width="100%"
+                  >
                     <v-card-text class="text-body-1">
                       <v-row>
                         <v-col>{{ item[8] }} </v-col>
@@ -90,7 +162,13 @@
                     </v-card-text>
                   </v-card>
                   <span v-if="item[0]">Answer</span>
-                  <v-card :style="questionAnswerCardBackgroundColor" class="rounded-lg" outlined width="100%" v-if="item[0]">
+                  <v-card
+                    :style="questionAnswerCardBackgroundColor"
+                    class="rounded-lg"
+                    outlined
+                    width="100%"
+                    v-if="item[0]"
+                  >
                     <v-card-text class="text-body-1">
                       <v-row>
                         <v-col> {{ item[2] }} </v-col>
@@ -99,28 +177,40 @@
                   </v-card>
                 </v-card-text>
                 <v-divider class="mx-4"></v-divider>
-                <v-card-title  class="text-body-1">
+                <v-card-title class="text-body-1">
                   <v-row>
                     <v-col>
                       <v-tooltip right>
                         <template v-slot:activator="{ on, attrs }">
-                          <v-chip v-bind="attrs" v-on="on">To: {{ shortAddress(item[7]) }}</v-chip>
+                          <v-chip v-bind="attrs" v-on="on"
+                            >To: {{ shortAddress(item[7]) }}</v-chip
+                          >
                         </template>
-                        <span>{{item[7]}} <v-icon dark> mdi-content-copy </v-icon></span> 
+                        <span
+                          >{{ item[7] }}
+                          <v-icon dark> mdi-content-copy </v-icon></span
+                        >
                       </v-tooltip>
                     </v-col>
-                    <v-col class="text-right">{{ parseInt(item[5])/1e18 }} ETH </v-col>
+                    <v-col class="text-right"
+                      >{{ parseInt(item[5]) / 1e18 }} ETH
+                    </v-col>
                   </v-row>
                 </v-card-title>
-                
-                
+
                 <v-card-actions class="pl-5">
                   <v-row>
                     <!-- <v-col cols="" v-if="!item[2]" class="text-body-2">
                       Locked until: {{ dueDate(item[4],item[3]) }}
                     </v-col> -->
                     <v-col cols="" class="text-right">
-                      <v-btn v-if="!item[2]" color="seondary" outlined @click="withdrawExpiredBidWithEtherJs(item[8])">Withdraw</v-btn>
+                      <v-btn
+                        v-if="!item[2]"
+                        color="seondary"
+                        outlined
+                        @click="withdrawExpiredBidWithEtherJs(item[8])"
+                        >Withdraw</v-btn
+                      >
                     </v-col>
                   </v-row>
                 </v-card-actions>
@@ -168,6 +258,26 @@ export default {
       return time;
     },
   },
+  data() {
+    return {
+      dialog: false,
+      question: {
+        toAddress: "0x13c5DB04644f9cfE79C79bBB1a74aaB9A04C98ea",
+        bid: 0,
+        text: "randomstring_" + Math.random().toString().substr(2, 5),
+        timeLimit: 60,
+      },
+      tab: 0,
+      tabItems: [{ tab: "Answered" }, { tab: "Pending" }, { tab: "All" }],
+      sortBy: "Date",
+      sortDirection: "desc",
+    };
+  },
+  watch: {
+    tab(newValue) {
+      this.$store.dispatch('bids/updateTabFilter',this.tabItems[newValue].tab)
+    }
+  },
   computed: {
     ...mapGetters({
       userName: "auth/userName",
@@ -175,21 +285,64 @@ export default {
       signer: "auth/metaMaskSigner",
       address: "auth/metaMaskAddress",
       isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
-      myBids: "bids/myBids",
+      filteredBids: "bids/filteredMyBids"
     }),
-    questionAnswerCardBackgroundColor(){
+    sortIcon() {
+      if (this.sortDirection == "desc") {
+        return "mdi-sort-variant";
+      } else {
+        return "mdi-sort-reverse-variant";
+      }
+    },
+    questionAnswerCardBackgroundColor() {
       if (this.$vuetify.theme.dark) {
         return {
-          'background-color': 'rgba(0,0,0,0.1)',
-        }
+          "background-color": "rgba(0,0,0,0.1)",
+        };
       } else {
         return {
-          'background-color': 'rgba(0,0,0,0.0)',
-        }
+          "background-color": "rgba(0,0,0,0.0)",
+        };
       }
+    },
+    sortedBids(){
+     if(this.sortBy == 'Date' && this.sortDirection == 'desc'){
+       return [...this.filteredBids].sort((a,b) => (a[4]-b[4]))
+     } 
+     else if(this.sortBy == 'Date' && this.sortDirection == 'asc'){
+       return [...this.filteredBids].sort((a,b) => -(a[4]-b[4]))
+     }
+     else if(this.sortBy == 'Bid' && this.sortDirection == 'desc'){
+       return [...this.filteredBids].sort((a,b) => -(a[5]-b[5]))
+     } 
+     else if(this.sortBy == 'Bid' && this.sortDirection == 'asc'){
+       return [...this.filteredBids].sort((a,b) => (a[5]-b[5]))
+     } else{
+       return this.filteredBids
+     }
     }
   },
   methods: {
+    sortFunction(a, b) {
+      if (this.sortDirection == "asc") {
+        return a[4] - b[4];
+      } else if (this.sortDirection == "desc") {
+        return b[4] - a[4];
+      } else {
+        return 0;
+      }
+    },
+    sortByDateFunction() {
+      this.filteredMyBids.sort((a, b) => {
+        if (this.sortDirection == "asc") {
+          return a[4] - b[4];
+        } else if (this.sortDirection == "desc") {
+          return b[4] - a[4];
+        } else {
+          return 0;
+        }
+      }).bind(this);
+    },
     async getBidWithEtherJs(questionText) {
       const contract = new ethers.Contract(
         process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
@@ -239,7 +392,6 @@ export default {
       this.$store.dispatch("bids/updateMyBids", bids);
     },
     async makeNewWithEtherJs() {
-      
       const contract = new ethers.Contract(
         process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
         process.env.VUE_APP_ABI,
@@ -275,30 +427,26 @@ export default {
       const response = await this.signer.populateTransaction(data);
       this.signer.sendTransaction(response);
     },
-    shortAddress(address){
+    shortAddress(address) {
       return address.slice(0, 5) + "..." + address.slice(-4);
     },
-    dueDate(timestamp,timeLimit){
-      const shift = timeLimit
-      const dueStamp = Number(timestamp) + Number(shift)
-      const dueStampHex = "0x" + Number(dueStamp).toString(16)
-      console.log(timestamp)
-      console.log(dueStamp)
-      console.log(dueStampHex)
+    dueDate(timestamp, timeLimit) {
+      const shift = timeLimit;
+      const dueStamp = Number(timestamp) + Number(shift);
+      const dueStampHex = "0x" + Number(dueStamp).toString(16);
+      console.log(timestamp);
+      console.log(dueStamp);
+      console.log(dueStampHex);
 
-      return this.$options.filters.hexToDate(dueStampHex)
-    }
-  },
-  data() {
-    return {
-      dialog: false,
-      question: {
-        toAddress: "0x13c5DB04644f9cfE79C79bBB1a74aaB9A04C98ea",
-        bid: 0,
-        text: "randomstring_" + Math.random().toString().substr(2, 5),
-        timeLimit: 60
+      return this.$options.filters.hexToDate(dueStampHex);
+    },
+    changeShortIcon() {
+      if (this.sortDirection == "asc") {
+        this.sortDirection = "desc";
+      } else {
+        this.sortDirection = "asc";
       }
-    }
+    },
   },
   mounted() {
     if (this.isMetaMaskAuthenticated) this.updateMyBids();

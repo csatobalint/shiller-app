@@ -3,8 +3,8 @@
     <v-row>
       <v-col></v-col>
       <v-col cols="8">
-        <v-row class="py-5">
-          <v-col><h1>Bids to Me</h1> </v-col>
+        <v-row class="py-5 align-center">
+          <v-col class="text-h4">Questions sent to me</v-col>
           <v-col class="text-right">
             <v-btn class="mr-2" fab outlined color="primary" @click="updateBidsToMe()">
                 <v-icon dark> mdi-refresh </v-icon>

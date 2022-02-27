@@ -153,6 +153,9 @@ const auth = {
       updateMetaMaskAddress({commit}, address){
         commit('SET_METAMASK_ADDRESS',address)
         commit('SET_METAMASK_IS_AUTHENTICATED')
+      },
+      clearMetaMaskUser({commit}){
+        commit('DELETE_METAMASK_AUTH')
       }
     }
 };
