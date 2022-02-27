@@ -3,30 +3,44 @@
     <v-app-bar app elevation="0" class="gradientAppBarColor">
       <v-row>
         <v-col cols="4">
-          <div class="d-flex justfiy-start">
+          <div
+            class="d-flex justfiy-start"
+            style="cursor: pointer"
+            @click="goToHome()"
+          >
             <img
               :src="require('./assets/logo-' + this.colorMode + '.png')"
               class="mr-3"
               height="40"
             />
             <v-toolbar-title>
-              <span style="font-size: 1.4em">Shiller</span>
+              <span class="text-h4">Shiller</span>
             </v-toolbar-title>
           </div>
         </v-col>
         <v-col cols="4">
           <div class="d-flex justify-center">
-            <v-btn :to="{ name: 'mybids' }" text large class="mx-1" :disabled="!isMetaMaskAuthenticated"
+            <v-btn
+              :to="{ name: 'mybids' }"
+              text
+              large
+              class="mx-1"
+              :disabled="!isMetaMaskAuthenticated"
               >Ask something</v-btn
             >
-            <v-btn :to="{ name: 'bidstome' }" text large class="mx-1" :disabled="!isMetaMaskAuthenticated"
+            <v-btn
+              :to="{ name: 'bidstome' }"
+              text
+              large
+              class="mx-1"
+              :disabled="!isMetaMaskAuthenticated"
               >Answer questions</v-btn
             >
           </div>
         </v-col>
         <v-col cols="4">
           <div class="d-flex justify-end">
-            <v-btn
+            <!-- <v-btn
               color="primary"
               rounded
               outlined
@@ -35,7 +49,7 @@
               :loading="connectWalletButtonDisabled"
             >
               {{ metaMaskButtonText }}
-            </v-btn>
+            </v-btn> -->
             <v-btn
               outlined
               @click="switchDarkMode"
@@ -47,6 +61,124 @@
               <v-icon v-if="colorMode == 'dark'"> mdi-brightness-5 </v-icon>
               <v-icon v-else> mdi-brightness-2 </v-icon>
             </v-btn>
+            <template>
+              <div class="text-center">
+                <v-dialog v-model="connectWalletDialog" width="500">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      color="primary"
+                      outlined
+                      rounded
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      {{ metaMaskButtonText }}
+                    </v-btn>
+                  </template>
+
+                  <!-- Connect to a wallet -->
+                  <v-card
+                    class="rounded-lg pa-4"
+                    v-if="!isMetaMaskAuthenticated"
+                    outlined
+                  >
+                    <v-row>
+                      <v-col class="text-h6">Connect to a wallet</v-col>
+                      <v-col class="text-right">
+                        <v-btn
+                          fab
+                          small
+                          elevation="0"
+                          color="transparent"
+                          @click="connectWalletDialog = false"
+                        >
+                          <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col>
+                        <v-hover v-slot="{ hover }">
+                          <v-card
+                            @click="connectToMetaMask"
+                            class="pa-5 center"
+                            outlined
+                            style="cursor: pointer"
+                            :style="
+                              hover
+                                ? 'border-color:' +
+                                  $vuetify.theme.defaults[colorMode]
+                                    .appbarColor1
+                                : ''
+                            "
+                          >
+                            <v-row class="align-center">
+                              <v-col>MetaMask</v-col>
+                              <v-col>
+                                <v-img
+                                  class="float-right"
+                                  height="32"
+                                  width="32"
+                                  :src="require('./assets/metamask.png')"
+                                ></v-img>
+                              </v-col>
+                            </v-row>
+                          </v-card>
+                        </v-hover>
+                      </v-col>
+                    </v-row>
+                  </v-card>
+
+                  <!-- Connected to MetaMask -->
+                  <v-card class="rounded-lg pa-4" v-else outlined>
+                    <v-row class="align-center">
+                      <v-col class="text-h6">Account</v-col>
+                      <v-col class="text-right">
+                        <v-btn
+                          fab
+                          small
+                          elevation="0"
+                          color="transparent"
+                          @click="connectWalletDialog = false"
+                        >
+                          <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col>
+                        <v-card class="pa-5 center" outlined>
+                          <v-row class="align-center">
+                            <v-col>Connected with MetaMask</v-col>
+                            <v-col class="text-right">
+                              <v-btn color="primary" rounded outlined small @click="disconnect">
+                                Disconnect
+                              </v-btn>
+                            </v-col>
+                          </v-row>
+                          <v-row class="align-center">
+                            <v-col cols="12" class="align-center d-flex flex-row gap-4">
+                              <img class="ma-2" :src="require('./assets/metamask.png')" alt="avatar" height="32">
+                              <span>{{ shortAdress }}</span>
+                            </v-col>
+                            <v-col class="12">
+                              <v-btn small text target="_blank" :href="getEthersScanAddressPage()"> <v-icon>mdi-link</v-icon> View on explorer</v-btn>
+                              <v-btn small text @click="copyAddress()"> <v-icon>mdi-content-copy</v-icon> C <span class="text-lowercase">opy address</span></v-btn>
+                              <input 
+                                v-on:focus="$event.target.select()" 
+                                ref="clone" 
+                                readonly 
+                                type="hidden"
+                                :value="address"/>
+                            </v-col>
+                          </v-row>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-card>
+                </v-dialog>
+              </div>
+            </template>
           </div>
         </v-col>
       </v-row>
@@ -118,49 +250,23 @@
       </template> -->
     </v-app-bar>
     <v-main class="gradientBackgroundColor">
-      <!-- <v-col cols="2">
-            <v-sheet rounded="lg">
-              <v-list color="transparent">
-                <v-list-item link :to="{ name: 'questions' }">
-                  <v-list-item-content>
-                    <v-list-item-title> Questions </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-
-                <v-divider class="my-2"></v-divider>
-
-                <v-list-item link color="grey lighten-4">
-                  <v-list-item-content>
-                    <v-list-item-title> Refresh </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </v-sheet>
-          </v-col> -->
-      <div class="text-center">
-        <v-dialog v-model="metaMaskErrorDialog" width="500">
-          <v-card>
-            <v-card-title class="text-h5"> MetaMask message </v-card-title>
-
-            <v-card-text>
-              {{ metaMaskErrorText }}
-            </v-card-text>
-
-            <v-divider></v-divider>
-
-            <v-card-actions>
-              <v-spacer></v-spacer>
+      <template>
+        <div class="text-center ma-2">
+          <v-snackbar v-model="metaMaskErrorDialog">
+            {{ metaMaskErrorText }}
+            <template v-slot:action="{ attrs }">
               <v-btn
                 color="primary"
-                outlined
+                text
+                v-bind="attrs"
                 @click="metaMaskErrorDialog = false"
               >
                 Close
               </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </div>
+            </template>
+          </v-snackbar>
+        </div>
+      </template>
       <!-- Provides the application the proper gutter -->
       <v-container fluid>
         <!-- If using vue-router -->
@@ -178,6 +284,7 @@
 </template>
 
 <script>
+import "vue-router";
 import { mapGetters } from "vuex";
 import firebase from "firebase";
 import MetaMaskOnboarding from "@metamask/onboarding";
@@ -191,6 +298,7 @@ export default {
       contractAddress: process.env.VUE_APP_CONTRACT_ADDRESS.toLowerCase(),
       connectWalletButtonText: "Connect to a wallet",
       connectWalletButtonDisabled: false,
+      connectWalletDialog: false,
       metaMaskErrorText: "",
       metaMaskErrorDialog: false,
       showMenu: false,
@@ -217,10 +325,13 @@ export default {
     isMetaMaskInstalled() {
       return Boolean(ethereum && ethereum.isMetaMask);
     },
+    shortAdress() {
+      return this.address.slice(0, 5) + "..." + this.address.slice(-4);
+    },
     metaMaskButtonText() {
       if (this.isMetaMaskInstalled) {
         if (this.isMetaMaskAuthenticated) {
-          return this.address.slice(0, 5) + "..." + this.address.slice(-4);
+          return this.shortAdress;
         } else {
           return "Connect to wallet";
         }
@@ -232,6 +343,24 @@ export default {
   methods: {
     switchDarkMode() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark;
+    },
+    goToHome() {
+      this.$router.go("/");
+    },
+    getEthersScanAddressPage(){
+      let chainName = {
+        1: '',
+        42: 'kovan.'
+      };
+      return `https://${chainName[ethereum.networkVersion]}etherscan.io/address/${this.address}`
+    },
+    copyAddress(){
+      this.$refs.clone.focus();
+      document.execCommand('copy');
+    },
+    disconnect(){
+      this.$store.dispatch('auth/clearMetaMaskUser')
+      this.$router.push('/')
     },
     signOut() {
       firebase
@@ -277,6 +406,32 @@ export default {
           if (isUnlocked === false)
             throw new Error("Please unlock your MetaMask client to proceed.");
 
+          try {
+            await ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: "0x2A" }],
+            });
+          } catch (switchError) {
+            // This error code indicates that the chain has not been added to MetaMask.
+            if (switchError.code === 4902) {
+              try {
+                await ethereum.request({
+                  method: "wallet_addEthereumChain",
+                  params: [
+                    {
+                      chainId: "0xf00",
+                      chainName: "...",
+                      rpcUrls: ["https://..."] /* ... */,
+                    },
+                  ],
+                });
+              } catch (addError) {
+                // handle "add" error
+              }
+            }
+            // handle other "switch" errors
+          }
+
           // Get provider object
           const provider = new ethers.providers.Web3Provider(
             window.ethereum,
@@ -314,7 +469,7 @@ export default {
       }
     },
   },
-  mounted() {
+  created() {
     this.connectToMetaMask();
   },
 };
@@ -341,9 +496,9 @@ html {
     var(--v-appbarColor1-base) 50%,
     var(--v-appbarColor1-base) 100%
   );
-  border-bottom: 1px solid rgb(32 34 49)
+  border-bottom: 1px solid rgb(32 34 49);
 }
-.answerQuestionBackground{
+.answerQuestionBackground {
   background: var(--v-answerQuestionBackgroundColor-base);
   background: linear-gradient(
     90deg,
@@ -352,5 +507,4 @@ html {
     var(--v-answerQuestionBackgroundColor-base) 100%
   );
 }
-
 </style>
