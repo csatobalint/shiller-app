@@ -151,25 +151,53 @@
                           <v-row class="align-center">
                             <v-col>Connected with MetaMask</v-col>
                             <v-col class="text-right">
-                              <v-btn color="primary" rounded outlined small @click="disconnect">
+                              <v-btn
+                                color="primary"
+                                rounded
+                                outlined
+                                small
+                                @click="disconnect"
+                              >
                                 Disconnect
                               </v-btn>
                             </v-col>
                           </v-row>
                           <v-row class="align-center">
-                            <v-col cols="12" class="align-center d-flex flex-row gap-4">
-                              <img class="ma-2" :src="require('./assets/metamask.png')" alt="avatar" height="32">
+                            <v-col
+                              cols="12"
+                              class="align-center d-flex flex-row gap-4"
+                            >
+                              <img
+                                class="ma-2"
+                                :src="require('./assets/metamask.png')"
+                                alt="avatar"
+                                height="32"
+                              />
                               <span>{{ shortAdress }}</span>
                             </v-col>
                             <v-col class="12">
-                              <v-btn small text target="_blank" :href="getEthersScanAddressPage()"> <v-icon>mdi-link</v-icon> View on explorer</v-btn>
-                              <v-btn small text @click="copyAddress()"> <v-icon>mdi-content-copy</v-icon> C <span class="text-lowercase">opy address</span></v-btn>
-                              <input 
-                                v-on:focus="$event.target.select()" 
-                                ref="clone" 
-                                readonly 
+                              <v-btn
+                                small
+                                text
+                                target="_blank"
+                                :href="getEthersScanAddressPage()"
+                              >
+                                <v-icon>mdi-link</v-icon> View on
+                                explorer</v-btn
+                              >
+                              <v-btn small text @click="copyAddress()">
+                                <v-icon>mdi-content-copy</v-icon> C
+                                <span class="text-lowercase"
+                                  >opy address</span
+                                ></v-btn
+                              >
+                              <input
+                                v-on:focus="$event.target.select()"
+                                ref="clone"
+                                readonly
                                 type="hidden"
-                                :value="address"/>
+                                :value="address"
+                              />
                             </v-col>
                           </v-row>
                         </v-card>
@@ -336,7 +364,7 @@ export default {
           return "Connect to wallet";
         }
       } else {
-        return "Click here to install MetaMask!";
+        return "Connect to wallet";
       }
     },
   },
@@ -347,20 +375,22 @@ export default {
     goToHome() {
       this.$router.go("/");
     },
-    getEthersScanAddressPage(){
+    getEthersScanAddressPage() {
       let chainName = {
-        1: '',
-        42: 'kovan.'
+        1: "",
+        42: "kovan.",
       };
-      return `https://${chainName[ethereum.networkVersion]}etherscan.io/address/${this.address}`
+      return `https://${
+        chainName[ethereum.networkVersion]
+      }etherscan.io/address/${this.address}`;
     },
-    copyAddress(){
+    copyAddress() {
       this.$refs.clone.focus();
-      document.execCommand('copy');
+      document.execCommand("copy");
     },
-    disconnect(){
-      this.$store.dispatch('auth/clearMetaMaskUser')
-      this.$router.push('/')
+    disconnect() {
+      this.$store.dispatch("auth/clearMetaMaskUser");
+      this.$router.push("/");
     },
     signOut() {
       firebase
@@ -400,62 +430,67 @@ export default {
     },
     async connectToMetaMask() {
       try {
-        if (this.isMetaMaskInstalled) {
-          // Check if the metamask client is unlocked
-          const isUnlocked = await ethereum._metamask.isUnlocked();
-          if (isUnlocked === false)
-            throw new Error("Please unlock your MetaMask client to proceed.");
-
-          try {
-            await ethereum.request({
-              method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x2A" }],
-            });
-          } catch (switchError) {
-            // This error code indicates that the chain has not been added to MetaMask.
-            if (switchError.code === 4902) {
-              try {
-                await ethereum.request({
-                  method: "wallet_addEthereumChain",
-                  params: [
-                    {
-                      chainId: "0xf00",
-                      chainName: "...",
-                      rpcUrls: ["https://..."] /* ... */,
-                    },
-                  ],
-                });
-              } catch (addError) {
-                // handle "add" error
-              }
-            }
-            // handle other "switch" errors
-          }
-
-          // Get provider object
-          const provider = new ethers.providers.Web3Provider(
-            window.ethereum,
-            "any"
-          );
-
-          // Prompt user for account connections
-          this.connectWalletButtonDisabled = true;
-          await provider.send("eth_requestAccounts", []);
-          this.connectWalletButtonDisabled = false;
-          this.$store.dispatch("auth/updateMetaMaskProvider", provider);
-          //console.log(provider);
-
-          // Get the signer and address
-          const signer = provider.getSigner();
-          const address = await signer.getAddress();
-          this.$store.dispatch("auth/updateMetaMaskAddress", address);
-          //console.log("Account:", address);
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+          // open the deeplink page
+          window.open("https://metamask.app.link/dapp/cacstestapp.web.app/");
         } else {
-          this.connectWalletButtonDisabled = true;
-          //On this object we have startOnboarding which will start the onboarding process for our end user
-          let url = process.env.VUE_APP_FORWARD_ORIGIN + this.$route.fullPath;
-          const onboarding = new MetaMaskOnboarding({ url });
-          onboarding.startOnboarding();
+          if (this.isMetaMaskInstalled) {
+            // Check if the metamask client is unlocked
+            const isUnlocked = await ethereum._metamask.isUnlocked();
+            if (isUnlocked === false)
+              throw new Error("Please unlock your MetaMask client to proceed.");
+
+            try {
+              await ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0x2A" }],
+              });
+            } catch (switchError) {
+              // This error code indicates that the chain has not been added to MetaMask.
+              if (switchError.code === 4902) {
+                try {
+                  await ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                      {
+                        chainId: "0xf00",
+                        chainName: "...",
+                        rpcUrls: ["https://..."] /* ... */,
+                      },
+                    ],
+                  });
+                } catch (addError) {
+                  // handle "add" error
+                }
+              }
+              // handle other "switch" errors
+            }
+
+            // Get provider object
+            const provider = new ethers.providers.Web3Provider(
+              window.ethereum,
+              "any"
+            );
+
+            // Prompt user for account connections
+            this.connectWalletButtonDisabled = true;
+            await provider.send("eth_requestAccounts", []);
+            this.connectWalletButtonDisabled = false;
+            this.$store.dispatch("auth/updateMetaMaskProvider", provider);
+            //console.log(provider);
+
+            // Get the signer and address
+            const signer = provider.getSigner();
+            const address = await signer.getAddress();
+            this.$store.dispatch("auth/updateMetaMaskAddress", address);
+            //console.log("Account:", address);
+          } else {
+            this.connectWalletButtonDisabled = true;
+            //On this object we have startOnboarding which will start the onboarding process for our end user
+            let url = process.env.VUE_APP_FORWARD_ORIGIN + this.$route.fullPath;
+            const onboarding = new MetaMaskOnboarding({ url });
+            onboarding.startOnboarding();
+          }
         }
       } catch (error) {
         this.metaMaskErrorDialog = true;
@@ -470,7 +505,10 @@ export default {
     },
   },
   created() {
-    this.connectToMetaMask();
+    //if metamask is isntalled and desktop devices, then try to connect on load
+    if (this.isMetaMaskInstalled && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      this.connectToMetaMask();
+    }
   },
 };
 </script>
