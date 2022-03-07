@@ -1,6 +1,10 @@
 import { mapState } from "vuex";
 import { mapGetters } from "vuex";
 import { ethers } from "ethers";
+const { ethereum } = window;
+const EthCrypto = require('eth-crypto');
+const ethUtil = require('ethereumjs-util');
+const sigUtil = require('@metamask/eth-sig-util');
 
 export default {
   filters: {
@@ -75,7 +79,7 @@ export default {
   methods: {
     async getBidWithEtherJs(questionText) {
       const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
         process.env.VUE_APP_ABI,
         this.provider
       );
@@ -93,7 +97,7 @@ export default {
     },
     async getBidsContractWithEtherJs() {
       const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
         process.env.VUE_APP_ABI,
         this.provider
       );
@@ -104,14 +108,14 @@ export default {
         from: this.address,
       };
       const data = await contract.getBidsContract(options);
-      await this.provider.call(data);
-      //console.log(data);
+      //await this.provider.call(data);
+      console.log(data);
       //console.log(response);
       return data;
     },
     async getBidsBeneficiaryWithEtherJs() {
       const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
         process.env.VUE_APP_ABI,
         this.provider
       );
@@ -129,7 +133,7 @@ export default {
     },
     async makeNewWithEtherJs() {
         const contract = new ethers.Contract(
-          process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+          process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
           process.env.VUE_APP_ABI,
           this.signer
         );
@@ -146,9 +150,68 @@ export default {
         const response = await this.signer.populateTransaction(data);
         this.signer.sendTransaction(response);
     },
+    async makeNewWithEtherJs2() {
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        this.signer
+      );
+      console.log(contract);
+      //check if user already generated their private keys
+      let encryptedPrivateKey = await this.getPrivateKey();
+      console.log(encryptedPrivateKey);
+      console.log(encryptedPrivateKey.length);
+      console.log(typeof encryptedPrivateKey);
+
+      const isKeysAlreadyNotSet = encryptedPrivateKey.length === 0
+      console.log(isKeysAlreadyNotSet);
+
+      // toAddress public key to use for encryption
+      const identityPublicKey = await contract.publicKeys(this.question.toAddress);
+      console.log(typeof identityPublicKey)
+      console.log(identityPublicKey)
+      // if toAddress is not generated already his keys
+      if(identityPublicKey === ''){
+        throw new Error('ToAddress is not already registered.')
+      }
+
+      const encryptedQuestion = await EthCrypto.cipher.stringify(
+        await EthCrypto.encryptWithPublicKey(identityPublicKey, this.question.text)
+      )
+      console.log(encryptedQuestion)
+
+      let data = null;
+
+      if (isKeysAlreadyNotSet) {
+        const generatedKeys = await this.generateKeys()
+        console.log(generatedKeys)
+        data = await contract.populateTransaction.makeNewWithSetKey(
+          this.question.toAddress, // toAddress
+          encryptedQuestion, //question text
+          //Math.abs(this.question.timeLimit), // time limit [s]
+          generatedKeys.identity.publicKey, // fromAddress generated public key
+          generatedKeys.encryptedPrivateKey, // fromAddress encrypted private key
+          0 // bidlimit TODO
+        );
+      }
+      else{
+        data = await contract.populateTransaction.makeNew(
+          this.question.toAddress, // toAddress
+          encryptedQuestion, //question text
+          Math.abs(this.question.timeLimit) // time limit [s]
+        );
+      }
+
+      data.value = ethers.utils.parseEther(this.question.bid.toString());
+      console.log(data);
+  
+      const response = await this.signer.populateTransaction(data);
+      this.signer.sendTransaction(response);
+
+  },
     async withdrawExpiredBidWithEtherJs(id) {
         const contract = new ethers.Contract(
-          process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+          process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
           process.env.VUE_APP_ABI,
           this.signer
         );
@@ -165,7 +228,7 @@ export default {
     },
     async rewardSolvedBidWithEtherJs(id,answer) {
         const contract = new ethers.Contract(
-          process.env.VUE_APP_CONTRACT_ADDRESS_V2.toLowerCase(), //contract address in .env file
+          process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
           process.env.VUE_APP_ABI,
           this.signer
         );
@@ -180,6 +243,109 @@ export default {
   
         const response = await this.signer.populateTransaction(data);
         this.signer.sendTransaction(response);
+    },
+    async generateKeys(){
+      const metamaskPublicKey = await ethereum.request({ 
+          method: "eth_getEncryptionPublicKey", 
+          params: [this.address] 
+      })
+
+      console.log("Pubkey for account ", this.address, " is: ", metamaskPublicKey);
+
+      const identity  = EthCrypto.createIdentity();
+      console.log("Identity: ", identity)
+
+      const encryptedPrivateKey = ethUtil.bufferToHex(
+        Buffer.from(
+        JSON.stringify(
+        sigUtil.encrypt({
+         publicKey: metamaskPublicKey,
+         data: identity.privateKey,
+         version: 'x25519-xsalsa20-poly1305',
+       })),'utf8'));
+       console.log("Encrypted privatekey: ", encryptedPrivateKey)
+
+       return {identity, encryptedPrivateKey}
+
+
+      //  const contract = new ethers.Contract(
+      //   process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+      //   process.env.VUE_APP_ABI,
+      //   this.provider
+      // );
+
+      //  const data = await contract.populateTransaction.setKeys(
+      //   identity.publicKey,
+      //   encryptedPrivateKey
+      // );
+
+      // console.log("Data: ", data)
+      // const response = await this.signer.populateTransaction(data);
+      // console.log("Response: ", response)
+      // const tx = this.signer.sendTransaction(response);
+      // console.log("Tx: ", tx);
+    },
+    async setKeys(){
+      const metamaskPublicKey = await ethereum.request({ 
+          method: "eth_getEncryptionPublicKey", 
+          params: [this.address] 
+      })
+
+      console.log("Pubkey for account ", this.address, " is: ", metamaskPublicKey);
+
+      const identity  = EthCrypto.createIdentity();
+      console.log("Identity: ", identity)
+      console.log("Identity public key: ", identity.publicKey)
+      
+      let identityPublicKeyFromPrivateKey = EthCrypto.publicKeyByPrivateKey( identity.privateKey )
+      console.log("Identity public key: ", identityPublicKeyFromPrivateKey)
+
+      const encryptedPrivateKey = ethUtil.bufferToHex(
+        Buffer.from(
+        JSON.stringify(
+        sigUtil.encrypt({
+         publicKey: metamaskPublicKey,
+         data: identity.privateKey,
+         version: 'x25519-xsalsa20-poly1305',
+       })),'utf8'));
+       console.log("Encrypted privatekey: ", encryptedPrivateKey)
+
+       const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        this.provider
+      );
+
+       const data = await contract.populateTransaction.setKeys(
+        identity.publicKey,
+        encryptedPrivateKey,
+        0
+      );
+
+
+      console.log("Data: ", data)
+      const response = await this.signer.populateTransaction(data);
+      console.log("Response: ", response)
+      const tx = this.signer.sendTransaction(response);
+      console.log("Tx: ", tx);
+    },
+    async getPrivateKey() {
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        this.provider
+      );
+
+      let options = {
+        gasPrice: 5000000000,
+        gasLimit: 1000000,
+        from: this.address,
+      };
+      const data = await contract.getPrivateKey(options);
+      const response = await this.provider.call(data);
+      console.log(data);
+      console.log(response);
+      return data;
     },
     async updateMyBids() {
         const ids = await this.getBidsContractWithEtherJs();
@@ -221,5 +387,7 @@ export default {
   },
   mounted() {
     console.log("hello from mixin!");
+    //this.setKeys();
+    //this.makeNewWithEtherJs2();
   },
 };

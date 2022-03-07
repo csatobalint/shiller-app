@@ -5,6 +5,7 @@
       <v-col cols="8">
         <v-row class="py-5 align-center">
           <v-col class="text-h4">My questions</v-col>
+          <v-btn @click="setKeys">Set Keys</v-btn>
           <v-col class="text-right">
             <v-btn
               class="mr-2"
@@ -89,6 +90,13 @@
                     @click="makeNewWithEtherJs"
                   >
                     Send
+                  </v-btn>
+                  <v-btn
+                    color="primary darken-1"
+                    outlined
+                    @click="makeNewWithEtherJs2"
+                  >
+                    Send2
                   </v-btn>
                 </v-card-actions>
               </v-card>
