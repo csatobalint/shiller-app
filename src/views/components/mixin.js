@@ -91,7 +91,7 @@ export default {
       };
       const data = await contract.getBid(questionText, options);
       await this.provider.call(data);
-      //console.log(data);
+      console.log(data);
       //console.log(response);
       return data;
     },
@@ -127,7 +127,7 @@ export default {
       };
       const data = await contract.getBidsBeneficiary(options);
       const response = await this.provider.call(data);
-      //console.log(data);
+      console.log(data);
       console.log(response);
       return data;
     },
@@ -217,7 +217,7 @@ export default {
           this.question.toAddress, // toAddress
           encryptedQuestion, //question encrypted by to user public key
           encryptedQuestionFrom, //question encrypted by to user public key
-          Math.abs(this.question.timeLimit) // time limit [s]
+          0 //Math.abs(this.question.timeLimit) // time limit [s]
         );
       }
 
@@ -245,17 +245,41 @@ export default {
         const response = await this.signer.populateTransaction(data);
         this.signer.sendTransaction(response);
     },
-    async rewardSolvedBidWithEtherJs(id,answer) {
+    async rewardSolvedBidWithEtherJs(id,answer,ownerAddress) {
+        console.log(id,answer,ownerAddress)
         const contract = new ethers.Contract(
           process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
           process.env.VUE_APP_ABI,
           this.signer
         );
         console.log(contract);
+
+        // ownerAddress public key to use for encryption
+        const identityPublicKeyOwner = await contract.publicKeys(ownerAddress);
+        console.log(identityPublicKeyOwner)
+
+        const encryptedAnswerByOwner = await EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(identityPublicKeyOwner, answer)
+        )
+        console.log(encryptedAnswerByOwner)
+
+        // identityPublicKeyBeneficiary public key to use for encryption
+        const identityPublicKeyBeneficiary = await contract.publicKeys(this.address);
+        console.log(identityPublicKeyBeneficiary)
+
+        const encryptedAnswerByBeneficiary = await EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(identityPublicKeyBeneficiary, answer)
+        )
+        console.log(encryptedAnswerByBeneficiary)
   
-        const data = await contract.populateTransaction.RewardSolvedBid(
-          id, //question text
-          answer
+        console.log(id)
+        console.log(encryptedAnswerByOwner)
+        console.log(encryptedAnswerByBeneficiary)
+
+        const data = await contract.populateTransaction.rewardSolvedBid(
+          id, //question id
+          encryptedAnswerByOwner,
+          encryptedAnswerByBeneficiary
         );
         data.value = 0;
         console.log(data);

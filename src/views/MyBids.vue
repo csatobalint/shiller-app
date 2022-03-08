@@ -114,7 +114,7 @@
               >
                 <v-card-subtitle class="pl-5 d-flex justify-space-between">
                   <span>Question</span>
-                  <span>{{ item[4] | hexToDate }}</span>
+                  <span>{{ item[2] | hexToDate }}</span>
                 </v-card-subtitle>
                 <v-card-text>
                   <v-card
@@ -125,7 +125,7 @@
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col>{{ item[8] }} </v-col>
+                        <v-col>{{ item[8][0] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
@@ -139,7 +139,7 @@
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col> {{ item[2] }} </v-col>
+                        <v-col> {{ item[8][2] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
@@ -161,7 +161,7 @@
                       </v-tooltip>
                     </v-col>
                     <v-col class="text-right"
-                      >{{ parseInt(item[5]) / 1e18 }} ETH
+                      >{{ parseInt(item[4]) / 1e18 }} ETH
                     </v-col>
                   </v-row>
                 </v-card-title>
