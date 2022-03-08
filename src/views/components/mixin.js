@@ -425,9 +425,15 @@ export default {
       if(encryptedText == '')
         return encryptedText;
       else{
-        const parsedEncryptedText = EthCrypto.cipher.parse(encryptedText)
-        const plainText = await EthCrypto.decryptWithPrivateKey(this.decryptedPrivateKey, parsedEncryptedText);
-        return plainText
+        try {
+          const parsedEncryptedText = EthCrypto.cipher.parse(encryptedText)
+          const plainText = await EthCrypto.decryptWithPrivateKey(this.decryptedPrivateKey, parsedEncryptedText);
+          return plainText
+        } catch (error) {
+          console.log(error)
+          return "This text cannot be decrypted with your account."
+        }
+        
       }
     },
     async updateMyBids() {
