@@ -151,25 +151,27 @@ export default {
         this.signer.sendTransaction(response);
     },
     async makeNewWithEtherJs2() {
+
       const contract = new ethers.Contract(
         process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
         process.env.VUE_APP_ABI,
         this.signer
       );
       console.log(contract);
-      //check if user already generated their private keys
+
+      //check if user already generated their private keys (from user)
       let encryptedPrivateKey = await this.getPrivateKey();
       console.log(encryptedPrivateKey);
       console.log(encryptedPrivateKey.length);
       console.log(typeof encryptedPrivateKey);
-
       const isKeysAlreadyNotSet = encryptedPrivateKey.length === 0
       console.log(isKeysAlreadyNotSet);
 
+           
       // toAddress public key to use for encryption
       const identityPublicKey = await contract.publicKeys(this.question.toAddress);
-      console.log(typeof identityPublicKey)
       console.log(identityPublicKey)
+
       // if toAddress is not generated already his keys
       if(identityPublicKey === ''){
         throw new Error('ToAddress is not already registered.')
@@ -183,21 +185,38 @@ export default {
       let data = null;
 
       if (isKeysAlreadyNotSet) {
+        console.log('isKeysAlreadyNotSet: ',isKeysAlreadyNotSet)
         const generatedKeys = await this.generateKeys()
         console.log(generatedKeys)
+        //from user public key
+        const identityPublicKeyFrom = generatedKeys.identity.publicKey;
+        //encrypted question by from public key
+        const encryptedQuestionFrom = await EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(identityPublicKeyFrom, this.question.text)
+        )
         data = await contract.populateTransaction.makeNewWithSetKey(
           this.question.toAddress, // toAddress
           encryptedQuestion, //question text
-          //Math.abs(this.question.timeLimit), // time limit [s]
+          encryptedQuestionFrom,
+          0, //Math.abs(this.question.timeLimit), // time limit [s]  ----> if not =0, then it works
           generatedKeys.identity.publicKey, // fromAddress generated public key
           generatedKeys.encryptedPrivateKey, // fromAddress encrypted private key
           0 // bidlimit TODO
         );
       }
       else{
+        console.log('isKeysAlreadyNotSet: ',isKeysAlreadyNotSet)
+        //from user public key
+        const identityPublicKeyFrom = await contract.publicKeys(this.address);
+        //encrypted question by from public key
+        const encryptedQuestionFrom = await EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(identityPublicKeyFrom, this.question.text)
+        )
+
         data = await contract.populateTransaction.makeNew(
           this.question.toAddress, // toAddress
-          encryptedQuestion, //question text
+          encryptedQuestion, //question encrypted by to user public key
+          encryptedQuestionFrom, //question encrypted by to user public key
           Math.abs(this.question.timeLimit) // time limit [s]
         );
       }
@@ -316,10 +335,10 @@ export default {
         this.provider
       );
 
-       const data = await contract.populateTransaction.setKeys(
-        identity.publicKey,
-        encryptedPrivateKey,
-        0
+       const data = await contract.populateTransaction.setKeysWithBidLimit(
+        identity.publicKey, //my public key
+        encryptedPrivateKey, // my private key
+        0 //bid limit
       );
 
 
