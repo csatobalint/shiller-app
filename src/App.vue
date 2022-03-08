@@ -483,7 +483,12 @@ export default {
             const signer = provider.getSigner();
             const address = await signer.getAddress();
             this.$store.dispatch("auth/updateMetaMaskAddress", address);
-            //console.log("Account:", address);
+            console.log("Account:", address);
+
+            //Get decryptedPrivateKey
+            const privateKey = await this.decryptPrivateKey()
+            console.log('XXXXXXXXXDecrypted private key: ',privateKey)
+            this.$store.commit('auth/SET_DECRYPTED_PRIVATE_KEY',privateKey)
           } else {
             this.connectWalletButtonDisabled = true;
             //On this object we have startOnboarding which will start the onboarding process for our end user
@@ -503,12 +508,34 @@ export default {
         console.log(error);
       }
     },
+    async decryptPrivateKey() {
+      const contract = new ethers.Contract(
+        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+        process.env.VUE_APP_ABI,
+        this.provider
+      );
+
+      let options = {
+        gasPrice: 5000000000,
+        gasLimit: 1000000,
+        from: this.address,
+      };
+      const encryptedPrivateKey = await contract.getPrivateKey(options);
+      console.log(encryptedPrivateKey);
+
+      return await ethereum
+        .request({
+          method: 'eth_decrypt',
+          params: [encryptedPrivateKey, this.address],
+        })
+      //console.log(this.decryptedPrivateKey);      
+    },
   },
   created() {
-    //if metamask is isntalled and desktop devices, then try to connect on load
-    if (this.isMetaMaskInstalled && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      this.connectToMetaMask();
-    }
+    // //if metamask is isntalled and desktop devices, then try to connect on load
+    // if (this.isMetaMaskInstalled && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    //   this.connectToMetaMask();
+    // }
   },
 };
 </script>

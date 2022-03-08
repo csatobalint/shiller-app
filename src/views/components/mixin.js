@@ -42,11 +42,12 @@ export default {
       provider: "auth/metaMaskProvider",
       signer: "auth/metaMaskSigner",
       address: "auth/metaMaskAddress",
-      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
+      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated"
     }),
     ...mapState({
         sortBy: state => state.bids.sortBy,
         sortDirection: state => state.bids.sortDirection,
+        decryptedPrivateKey: state => state.auth.decryptedPrivateKey
     }),
     questionAnswerCardBackgroundColor() {
       if (this.$vuetify.theme.dark) {
@@ -90,10 +91,24 @@ export default {
         from: this.address,
       };
       const data = await contract.getBid(questionText, options);
-      await this.provider.call(data);
-      console.log(data);
+      //await this.provider.call(data);
+
+      let decryptedData = data.slice(0,8).concat([[...data[8]]])
+      console.log(decryptedData);
       //console.log(response);
-      return data;
+
+      //i am the owner
+      if (decryptedData[6] == this.address) {
+        decryptedData[8][0] = await this.decryptTextWithPrivateKey(decryptedData[8][0])
+        decryptedData[8][2] = await this.decryptTextWithPrivateKey(decryptedData[8][2])
+      } 
+      // i am the beneficaiary
+      else {
+        decryptedData[8][1] = await this.decryptTextWithPrivateKey(decryptedData[8][1])
+        decryptedData[8][3] = await this.decryptTextWithPrivateKey(decryptedData[8][3])
+      }
+
+      return decryptedData;
     },
     async getBidsContractWithEtherJs() {
       const contract = new ethers.Contract(
@@ -169,18 +184,18 @@ export default {
 
            
       // toAddress public key to use for encryption
-      const identityPublicKey = await contract.publicKeys(this.question.toAddress);
-      console.log(identityPublicKey)
+      const identityPublicKeyBeneficiary = await contract.publicKeys(this.question.toAddress);
+      console.log(identityPublicKeyBeneficiary)
 
       // if toAddress is not generated already his keys
-      if(identityPublicKey === ''){
-        throw new Error('ToAddress is not already registered.')
+      if(identityPublicKeyBeneficiary === ''){
+        throw new Error('Beneficiary is not already registered.')
       }
 
-      const encryptedQuestion = await EthCrypto.cipher.stringify(
-        await EthCrypto.encryptWithPublicKey(identityPublicKey, this.question.text)
+      const encryptedQuestionBeneficiary = EthCrypto.cipher.stringify(
+        await EthCrypto.encryptWithPublicKey(identityPublicKeyBeneficiary, this.question.text)
       )
-      console.log(encryptedQuestion)
+      console.log(encryptedQuestionBeneficiary)
 
       let data = null;
 
@@ -189,15 +204,15 @@ export default {
         const generatedKeys = await this.generateKeys()
         console.log(generatedKeys)
         //from user public key
-        const identityPublicKeyFrom = generatedKeys.identity.publicKey;
+        const identityPublicKeyOwner = generatedKeys.identity.publicKey;
         //encrypted question by from public key
-        const encryptedQuestionFrom = await EthCrypto.cipher.stringify(
-          await EthCrypto.encryptWithPublicKey(identityPublicKeyFrom, this.question.text)
+        const encryptedQuestionOwner = EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(identityPublicKeyOwner, this.question.text)
         )
         data = await contract.populateTransaction.makeNewWithSetKey(
           this.question.toAddress, // toAddress
-          encryptedQuestion, //question text
-          encryptedQuestionFrom,
+          encryptedQuestionOwner, //question text
+          encryptedQuestionBeneficiary,
           0, //Math.abs(this.question.timeLimit), // time limit [s]  ----> if not =0, then it works
           generatedKeys.identity.publicKey, // fromAddress generated public key
           generatedKeys.encryptedPrivateKey, // fromAddress encrypted private key
@@ -207,16 +222,16 @@ export default {
       else{
         console.log('isKeysAlreadyNotSet: ',isKeysAlreadyNotSet)
         //from user public key
-        const identityPublicKeyFrom = await contract.publicKeys(this.address);
+        const identityPublicKeyOwner = await contract.publicKeys(this.address);
         //encrypted question by from public key
-        const encryptedQuestionFrom = await EthCrypto.cipher.stringify(
-          await EthCrypto.encryptWithPublicKey(identityPublicKeyFrom, this.question.text)
+        const encryptedQuestionOwner = EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(identityPublicKeyOwner, this.question.text)
         )
 
         data = await contract.populateTransaction.makeNew(
           this.question.toAddress, // toAddress
-          encryptedQuestion, //question encrypted by to user public key
-          encryptedQuestionFrom, //question encrypted by to user public key
+          encryptedQuestionOwner, //question encrypted by to user public key
+          encryptedQuestionBeneficiary, //question encrypted by to user public key
           0 //Math.abs(this.question.timeLimit) // time limit [s]
         );
       }
@@ -225,9 +240,23 @@ export default {
       console.log(data);
   
       const response = await this.signer.populateTransaction(data);
-      this.signer.sendTransaction(response);
+      let transaction = await this.signer.sendTransaction(response);
+      console.log(transaction)
+
+      transaction = await this.provider.getTransaction ( transaction.hash )
+
+      while (transaction.blockNumber === null) {
+        await this.sleep(100)
+        transaction = await this.provider.getTransaction ( transaction.hash )
+      }
+      
+      const transactionReceipt = await this.provider.getTransactionReceipt(transaction.hash)
+      console.log(transactionReceipt);
 
   },
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
     async withdrawExpiredBidWithEtherJs(id) {
         const contract = new ethers.Contract(
           process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
@@ -339,6 +368,7 @@ export default {
       const identity  = EthCrypto.createIdentity();
       console.log("Identity: ", identity)
       console.log("Identity public key: ", identity.publicKey)
+      console.log("!!!!!!Identity private key: ", identity.privateKey)
       
       let identityPublicKeyFromPrivateKey = EthCrypto.publicKeyByPrivateKey( identity.privateKey )
       console.log("Identity public key: ", identityPublicKeyFromPrivateKey)
@@ -390,6 +420,16 @@ export default {
       console.log(response);
       return data;
     },
+    async decryptTextWithPrivateKey(encryptedText){
+      // if no answer given the answer are empty strings.......
+      if(encryptedText == '')
+        return encryptedText;
+      else{
+        const parsedEncryptedText = EthCrypto.cipher.parse(encryptedText)
+        const plainText = await EthCrypto.decryptWithPrivateKey(this.decryptedPrivateKey, parsedEncryptedText);
+        return plainText
+      }
+    },
     async updateMyBids() {
         const ids = await this.getBidsContractWithEtherJs();
         const bids = [];
@@ -431,6 +471,7 @@ export default {
   mounted() {
     console.log("hello from mixin!");
     //this.setKeys();
+    //this.decryptedPrivateKey();
     //this.makeNewWithEtherJs2();
   },
 };

@@ -53,7 +53,7 @@ const bids = {
       },
       SET_SORT_DIRECTION(state, data) {
         state.sortDirection = data;
-      },
+      }
     },
     actions: {
         updateMyBids({commit},data){

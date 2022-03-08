@@ -12,7 +12,8 @@ const auth = {
         },
         metamask: null,
         userName: localStorage.getItem('userName'),
-        metaMask: null
+        metaMask: null,
+        decryptedPrivateKey: ""
     },
 
     getters: {
@@ -81,6 +82,9 @@ const auth = {
         localStorage.removeItem('metaMask')
         localStorage.removeItem('isAuthenticated')
       },
+      SET_DECRYPTED_PRIVATE_KEY(state, data) {
+        state.decryptedPrivateKey = data;
+      }
     },
     actions: {
       async fetchUser({ commit, state }, user) {

@@ -173,10 +173,10 @@
                     </v-col> -->
                     <v-col cols="" class="text-right">
                       <v-btn
-                        v-if="!item[2]"
+                        v-if="!item[1]"
                         color="seondary"
                         outlined
-                        @click="withdrawExpiredBidWithEtherJs(item[8])"
+                        @click="withdrawExpiredBidWithEtherJs(item[9])"
                         >Withdraw</v-btn
                       >
                     </v-col>
