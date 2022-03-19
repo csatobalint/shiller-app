@@ -5,7 +5,7 @@
       <v-col cols="8">
         <v-row class="py-5 align-center">
           <v-col class="text-h4">My questions</v-col>
-          <v-btn @click="setKeys">Set Keys</v-btn>
+          <v-btn @click="setKeysWithBidLimit">Set Keys</v-btn>
           <v-col class="text-right">
             <v-btn
               class="mr-2"
@@ -84,37 +84,28 @@
                   >
                     Close
                   </v-btn>
-                  <v-btn
-                    color="primary darken-1"
-                    outlined
-                    @click="makeNewWithEtherJs"
-                  >
+                  <v-btn color="primary darken-1" outlined @click="makeNew">
                     Send
-                  </v-btn>
-                  <v-btn
-                    color="primary darken-1"
-                    outlined
-                    @click="makeNewWithEtherJs2"
-                  >
-                    Send2
                   </v-btn>
                 </v-card-actions>
               </v-card>
             </v-dialog>
           </v-col>
         </v-row>
-        <Tab :tab-items="[{ 'tab': 'Answered' }, { 'tab': 'Pending' }, { 'tab': 'All' }]"></Tab>
+        <Tab
+          :tab-items="[{ tab: 'Answered' }, { tab: 'Pending' }, { tab: 'All' }]"
+        ></Tab>
         <template v-for="(item, index) in sortedBids">
           <template>
             <v-row :key="index" class="pb-5">
               <v-card
                 class="rounded-xl pa-2"
-                :class="[item[2] ? 'answerQuestionBackground' : '']"
+                :class="[item[BID.answered] ? 'answerQuestionBackground' : '']"
                 width="100%"
               >
                 <v-card-subtitle class="pl-5 d-flex justify-space-between">
                   <span>Question</span>
-                  <span>{{ item[2] | hexToDate }}</span>
+                  <span>{{ item[BID.timestamp] | hexToDate }}</span>
                 </v-card-subtitle>
                 <v-card-text>
                   <v-card
@@ -125,21 +116,21 @@
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col>{{ item[8][0] }} </v-col>
+                        <v-col>{{ item[BID.messages][0] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
-                  <div v-if="item[0]" class="my-4">Answer</div>
+                  <div v-if="item[BID.answered]" class="my-4">Answer</div>
                   <v-card
                     :style="questionAnswerCardBackgroundColor"
                     class="rounded-lg"
                     outlined
                     width="100%"
-                    v-if="item[0]"
+                    v-if="item[BID.answered]"
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col> {{ item[8][2] }} </v-col>
+                        <v-col> {{ item[BID.messages][2] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
@@ -151,32 +142,35 @@
                       <v-tooltip right>
                         <template v-slot:activator="{ on, attrs }">
                           <v-chip v-bind="attrs" v-on="on"
-                            >To: {{ shortAddress(item[7]) }}</v-chip
+                            >To:
+                            {{
+                              shortAddress(item[BID.beneficiaryAddress])
+                            }}</v-chip
                           >
                         </template>
                         <span
-                          >{{ item[7] }}
+                          >{{ item[BID.beneficiaryAddress] }}
                           <v-icon dark> mdi-content-copy </v-icon></span
                         >
                       </v-tooltip>
                     </v-col>
                     <v-col class="text-right"
-                      >{{ parseInt(item[4]) / 1e18 }} ETH
+                      >{{ parseInt(item[BID.value]) / 1e18 }} ETH
                     </v-col>
                   </v-row>
                 </v-card-title>
 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <!-- <v-col cols="" v-if="!item[2]" class="text-body-2">
-                      Locked until: {{ dueDate(item[4],item[3]) }}
+                    <!-- <v-col cols="" v-if="!item[BID.timestamp]" class="text-body-2">
+                      Locked until: {{ dueDate(item[BID.value],item[BID.deadline]) }}
                     </v-col> -->
                     <v-col cols="" class="text-right">
                       <v-btn
-                        v-if="!item[1]"
+                        v-if="!item[BID.withdrawn]"
                         color="seondary"
                         outlined
-                        @click="withdrawExpiredBidWithEtherJs(item[9])"
+                        @click="withdrawExpiredBid(item[9])"
                         >Withdraw</v-btn
                       >
                     </v-col>
@@ -194,14 +188,14 @@
 
 <script>
 import { mapGetters } from "vuex";
-import mixinBids from './components/mixin';
-import Tab from './components/Tab.vue'
+import bidMixin from "./bidMixin";
+import Tab from "./components/Tab.vue";
 
 export default {
   components: {
     Tab,
   },
-  mixins: [mixinBids],
+  mixins: [bidMixin],
   data() {
     return {
       dialog: false,
@@ -215,10 +209,10 @@ export default {
   },
   computed: {
     ...mapGetters({
-      filteredBids: "bids/filteredMyBids"
+      filteredBids: "bids/filteredMyBids",
     }),
-    
   },
+  methods: {},
   mounted() {
     if (this.isMetaMaskAuthenticated) this.updateMyBids();
   },

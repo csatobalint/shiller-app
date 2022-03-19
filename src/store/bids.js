@@ -4,6 +4,18 @@ const bids = {
 	namespaced: true,
 
     state: {
+        BID:{
+            answered: 0,
+            withdrawn: 1,
+            timestamp: 2,
+            deadline: 3,
+            value: 4,
+            sum: 5,
+            ownerAddress: 6,
+            beneficiaryAddress: 7,
+            messages: 8,
+            questionId: 9
+        },
         myBids: [],
         bidsToMe: [],
         sortBy: "Date",

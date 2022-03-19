@@ -35,6 +35,9 @@ const auth = {
       metaMaskAddress(state){
         return state.metaMask.address
       },
+      metaMaskContract(state){
+        return state.metaMask.contract
+      },
       isMetaMaskAuthenticated(state){
         return state.isMetaMaskAuthenticated
       }
@@ -60,16 +63,22 @@ const auth = {
         state.userName = data
         localStorage.setItem('userName', data)
       },
+      SET_METAMASK_ADDRESS(state,address){
+        if(state.metaMask === null)
+          state.metaMask = {}
+        state.metaMask.address = address
+        //localStorage.setItem('metaMask', JSON.stringify(state.metaMask))
+      },
       SET_METAMASK_PROVIDER(state,provider){
         if(state.metaMask === null)
           state.metaMask = {}
         state.metaMask.provider = provider
         //localStorage.setItem('metaMask', JSON.stringify(state.metaMask))
       },
-      SET_METAMASK_ADDRESS(state,address){
+      SET_METAMASK_CONTRACT(state,contract){
         if(state.metaMask === null)
           state.metaMask = {}
-        state.metaMask.address = address
+        state.metaMask.contract = contract
         //localStorage.setItem('metaMask', JSON.stringify(state.metaMask))
       },
       SET_METAMASK_IS_AUTHENTICATED(state){
@@ -157,6 +166,9 @@ const auth = {
       updateMetaMaskAddress({commit}, address){
         commit('SET_METAMASK_ADDRESS',address)
         commit('SET_METAMASK_IS_AUTHENTICATED')
+      },
+      updateMetaMaskContract({commit}, contract){
+        commit('SET_METAMASK_CONTRACT',contract)
       },
       clearMetaMaskUser({commit}){
         commit('DELETE_METAMASK_AUTH')

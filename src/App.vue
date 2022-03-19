@@ -156,7 +156,7 @@
                                 rounded
                                 outlined
                                 small
-                                @click="disconnect"
+                                @click="disconnectMetaMask"
                               >
                                 Disconnect
                               </v-btn>
@@ -185,7 +185,7 @@
                                 <v-icon>mdi-link</v-icon> View on
                                 explorer</v-btn
                               >
-                              <v-btn small text @click="copyAddress()">
+                              <v-btn small text @click="copyAddress('addressInput')">
                                 <v-icon>mdi-content-copy</v-icon> C
                                 <span class="text-lowercase"
                                   >opy address</span
@@ -193,7 +193,7 @@
                               >
                               <input
                                 v-on:focus="$event.target.select()"
-                                ref="clone"
+                                ref="addressInput"
                                 readonly
                                 type="hidden"
                                 :value="address"
@@ -318,9 +318,11 @@ import firebase from "firebase";
 import MetaMaskOnboarding from "@metamask/onboarding";
 const { ethereum } = window;
 import { ethers } from "ethers";
+import globaMixin from "./views/globalMixin";
 
 export default {
   name: "App",
+  mixins: [globaMixin],
   data() {
     return {
       contractAddress: process.env.VUE_APP_CONTRACT_ADDRESS.toLowerCase(),
@@ -338,17 +340,10 @@ export default {
     };
   },
   computed: {
-    colorMode() {
-      return this.$vuetify.theme.dark ? "dark" : "light";
-    },
     ...mapGetters({
-      user: "auth/user",
-      isAuthenticated: "auth/isAuthenticated",
-      userName: "auth/userName",
-      provider: "auth/metaMaskProvider",
-      signer: "auth/metaMaskSigner",
-      address: "auth/metaMaskAddress",
-      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
+      //user: "auth/user",
+      //isAuthenticated: "auth/isAuthenticated",
+      //userName: "auth/userName",
     }),
     isMetaMaskInstalled() {
       return Boolean(ethereum && ethereum.isMetaMask);
@@ -364,8 +359,11 @@ export default {
           return "Connect to wallet";
         }
       } else {
-        return "Connect to wallet";
+        return "Install wallet";
       }
+    },
+    colorMode() {
+      return this.$vuetify.theme.dark ? "dark" : "light";
     },
   },
   methods: {
@@ -384,14 +382,9 @@ export default {
         chainName[ethereum.networkVersion]
       }etherscan.io/address/${this.address}`;
     },
-    copyAddress() {
-      this.$refs.clone.focus();
-      document.execCommand("copy");
-    },
-    disconnect() {
-      this.$store.dispatch("auth/clearMetaMaskUser");
-      this.$router.push("/");
-    },
+
+
+    // NOT USED
     signOut() {
       firebase
         .auth()
@@ -430,7 +423,11 @@ export default {
     },
     async connectToMetaMask() {
       try {
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        if (
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          )
+        ) {
           // open the deeplink page
           window.open("https://metamask.app.link/dapp/cacstestapp.web.app/");
         } else {
@@ -485,10 +482,19 @@ export default {
             this.$store.dispatch("auth/updateMetaMaskAddress", address);
             console.log("Account:", address);
 
+            // Get the contract
+            const contract = new ethers.Contract(
+              process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+              process.env.VUE_APP_ABI,
+              this.provider
+            );
+            this.$store.dispatch("auth/updateMetaMaskContract", contract);
+            console.log("Contract:", contract);
+
             //Get decryptedPrivateKey
-            const privateKey = await this.decryptPrivateKey()
-            console.log('XXXXXXXXXDecrypted private key: ',privateKey)
-            this.$store.commit('auth/SET_DECRYPTED_PRIVATE_KEY',privateKey)
+            const privateKey = await this.decryptPrivateKey();
+            console.log("XXXXXXXXX Decrypted private key: ", privateKey);
+            this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
           } else {
             this.connectWalletButtonDisabled = true;
             //On this object we have startOnboarding which will start the onboarding process for our end user
@@ -508,27 +514,22 @@ export default {
         console.log(error);
       }
     },
+    disconnectMetaMask() {
+      this.$store.dispatch("auth/clearMetaMaskUser");
+      this.$router.push("/");
+    },
     async decryptPrivateKey() {
-      const contract = new ethers.Contract(
-        process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
-        process.env.VUE_APP_ABI,
-        this.provider
-      );
-
       let options = {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
         from: this.address,
       };
-      const encryptedPrivateKey = await contract.getPrivateKey(options);
+      const encryptedPrivateKey = await this.contract.getPrivateKey(options);
       console.log(encryptedPrivateKey);
 
-      return await ethereum
-        .request({
-          method: 'eth_decrypt',
-          params: [encryptedPrivateKey, this.address],
-        })
-      //console.log(this.decryptedPrivateKey);      
+      return await ethereum.request({
+        method: "eth_decrypt",
+        params: [encryptedPrivateKey, this.address],
+      });
+      //console.log(this.decryptedPrivateKey);
     },
   },
   created() {
