@@ -38,6 +38,11 @@ const routes = [
     name: 'bidstome',
     component: () => import('../views/BidsToMe.vue'),
    },
+   {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../views/Profile.vue'),
+   },
 ]
 
 const router = new VueRouter({

@@ -132,6 +132,15 @@ export default {
       if(identityPublicKeyBeneficiary == ''){
         throw new Error('Beneficiary is not already registered.')
       }
+
+      const beneficiaryBidLimit = await this.contract.bidLimits(this.question.toAddress);
+      // if beneficiaryAddress public key is not generated already his keys
+      console.log(Number(beneficiaryBidLimit)/1e18)
+      console.log(Number(this.question.bid))
+      console.log(Number(beneficiaryBidLimit)/1e18 >= Number(this.question.bid))
+      if(Number(beneficiaryBidLimit)/1e18 > Number(this.question.bid)){
+        throw new Error('Too small bid.')
+      }
       
       // encrypt the question text with the beneficiary public key
       const encryptedQuestionBeneficiary = EthCrypto.cipher.stringify(
@@ -190,7 +199,7 @@ export default {
 
       let fee = 1; // 1%
       let bidAmount = Number(this.question.bid)*100/(100-fee);
-      data.value = ethers.utils.parseEther(bidAmount.toString());
+      data.value = ethers.utils.parseEther(bidAmount.toFixed(16).toString());
       console.log(data);
   
       await this.waitForMetaMaskTransaction(data);
@@ -266,44 +275,6 @@ export default {
 
        return {identity, encryptedPrivateKey}
     },
-    async setKeysWithBidLimit(){
-      const metamaskPublicKey = await ethereum.request({ 
-          method: "eth_getEncryptionPublicKey", 
-          params: [this.address] 
-      })
-
-      console.log("Pubkey for account ", this.address, " is: ", metamaskPublicKey);
-
-      const identity  = EthCrypto.createIdentity();
-      console.log("Identity: ", identity)
-      console.log("Identity public key: ", identity.publicKey)
-      console.log("!!!!!!Identity private key: ", identity.privateKey)
-      
-      let identityPublicKeyFromPrivateKey = EthCrypto.publicKeyByPrivateKey( identity.privateKey )
-      console.log("Identity public key: ", identityPublicKeyFromPrivateKey)
-
-      const encryptedPrivateKey = ethUtil.bufferToHex(
-        Buffer.from(
-        JSON.stringify(
-        sigUtil.encrypt({
-         publicKey: metamaskPublicKey,
-         data: identity.privateKey,
-         version: 'x25519-xsalsa20-poly1305',
-       })),'utf8'));
-       console.log("Encrypted privatekey: ", encryptedPrivateKey)
-
-       const data = await this.contract.populateTransaction.setKeysWithBidLimit(
-        identity.publicKey, //my public key
-        encryptedPrivateKey, // my private key
-        0 //bid limit
-      );
-
-      console.log("Data: ", data)
-      const response = await this.signer.populateTransaction(data);
-      console.log("Response: ", response)
-      const tx = this.signer.sendTransaction(response);
-      console.log("Tx: ", tx);
-    },
     async getPublicKey() {
       const data = await this.contract.publicKeys(this.address);
       //const response = await this.provider.call(data);
@@ -312,14 +283,7 @@ export default {
       return data;
     },
     async getPrivateKey() {
-      const data = await this.contract.getPrivateKey(this.address);
-      //const response = await this.provider.call(data);
-      // console.log(data);
-      // console.log(response);
-      return data;
-    },
-    async getBidLimit() {
-      const data = await this.contract.bidLimits(this.address);
+      const data = await this.contract.getPrivateKey(this.options);
       //const response = await this.provider.call(data);
       // console.log(data);
       // console.log(response);
@@ -340,19 +304,6 @@ export default {
         }
         
       }
-    },
-    async waitForMetaMaskTransaction(data){
-      const response = await this.signer.populateTransaction(data);
-      //console.log(response);
-      let transaction = await this.signer.sendTransaction(response);
-      transaction = await this.provider.getTransaction ( transaction.hash )
-      while (transaction.blockNumber === null) {
-        await this.sleep(100)
-        transaction = await this.provider.getTransaction ( transaction.hash )
-      }
-      const transactionReceipt = await this.provider.getTransactionReceipt(transaction.hash)
-      //console.log(transactionReceipt);
-      return transactionReceipt;
     },
     async updateMyBids() {
         const ids = await this.getBidsContract();

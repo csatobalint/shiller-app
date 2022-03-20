@@ -10,10 +10,12 @@ const auth = {
         user: {
           
         },
-        metamask: null,
+        //metamask: null,
         userName: localStorage.getItem('userName'),
         metaMask: null,
-        decryptedPrivateKey: localStorage.getItem('decryptedPrivateKey')
+        isKeysSet: false,
+        decryptedPrivateKey: localStorage.getItem('decryptedPrivateKey'),
+
     },
 
     getters: {
@@ -56,9 +58,9 @@ const auth = {
         localStorage.removeItem('isAuthenticated')
         localStorage.removeItem('userName')
       },
-      SET_METAMASK(state,data){
-        state.metamask = data
-      },
+      // SET_METAMASK(state,data){
+      //   state.metamask = data
+      // },
       SET_USERNAME(state,data){
         state.userName = data
         localStorage.setItem('userName', data)
@@ -88,6 +90,9 @@ const auth = {
       SET_DECRYPTED_PRIVATE_KEY(state, data) {
         state.decryptedPrivateKey = data;
         localStorage.setItem('decryptedPrivateKey', data)
+      },
+      SET_IS_KEYS_SET(state,data){
+        state.isKeysSet = data
       },
       DELETE_METAMASK_AUTH(state){
         state.metaMask = null
@@ -133,21 +138,21 @@ const auth = {
       clearUser({commit}){
         commit("DELETE_USER");
       },
-      updateMetamask({commit, state}, metamask){
-        commit("SET_METAMASK",metamask);
-        if(state.user){
-          db
-          .collection('users')
-          .doc(state.user.email)
-          .update({metamask: state.metamask})
-          .then((data) => {
-            console.log(data)
-          }).
-          catch((error)=>{
-            console.log(`Error: ${error}`)
-          })
-        }
-      },
+      // updateMetamask({commit, state}, metamask){
+      //   commit("SET_METAMASK",metamask);
+      //   if(state.user){
+      //     db
+      //     .collection('users')
+      //     .doc(state.user.email)
+      //     .update({metamask: state.metamask})
+      //     .then((data) => {
+      //       console.log(data)
+      //     }).
+      //     catch((error)=>{
+      //       console.log(`Error: ${error}`)
+      //     })
+      //   }
+      // },
       updateUserName({commit, state}, userName){
         commit("SET_USERNAME",userName);
         if(state.user){

@@ -94,12 +94,7 @@
           </v-col>
         </v-row>
         <Tab
-          :tab-items="[
-            { tab: 'Answered' },
-            { tab: 'Pending' },
-            { tab: 'Expired' },
-            { tab: 'All' },
-          ]"
+          :tab-items="[{ tab: 'Answered' }, { tab: 'Pending' }, { tab: 'Expired' }, { tab: 'All' }]"
         ></Tab>
         <template v-for="(item, index) in sortedBids">
           <template>
@@ -147,20 +142,14 @@
                     <v-col>
                       <v-tooltip right>
                         <template v-slot:activator="{ on, attrs }">
-                          <v-chip
-                            v-bind="attrs"
-                            v-on="on"
-                            @click="
-                              copyAddress('question' + item[BID.questionId])
-                            "
+                          <v-chip v-bind="attrs" v-on="on" @click="copyAddress('question' + item[BID.questionId])"
                             >To:
                             {{
                               shortAddress(item[BID.beneficiaryAddress])
                             }}</v-chip
                           >
                         </template>
-                        <v-icon>mdi-content-copy</v-icon>
-                        <span>{{ item[BID.beneficiaryAddress] }} </span>
+                        <v-icon>mdi-content-copy</v-icon> <span>{{ item[BID.beneficiaryAddress] }} </span>
                       </v-tooltip>
                       <input
                         v-on:focus="$event.target.select()"
@@ -178,47 +167,18 @@
 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <v-col
-                      cols=""
-                      v-if="
-                        !item[BID.answered] &&
-                        !item[BID.withdrawn] &&
-                        item[BID.deadline] != 0
-                      "
-                      class="text-body-2"
-                    >
-                      <span
-                        v-if="
-                          countdown(item[BID.timestamp], item[BID.deadline]) > 0
-                        "
-                      >
-                        Expires in
-                        {{
-                          formatCountdownTime(
-                            countdown(item[BID.timestamp], item[BID.deadline])
-                          )
-                        }}
-                        at
-                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                    <v-col cols="" v-if="!item[BID.answered] && !item[BID.withdrawn] && item[BID.deadline] !=0 " class="text-body-2">
+                      <span v-if="countdown(item[BID.timestamp],item[BID.deadline]) > 0">
+                        Expires in {{formatCountdownTime(countdown(item[BID.timestamp],item[BID.deadline]))}} at {{ dueStamp(item[BID.timestamp],item[BID.deadline]) }}
                       </span>
                       <span v-else>
-                        Expired at
-                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                        Expired at {{ dueStamp(item[BID.timestamp],item[BID.deadline]) }}
                       </span>
                     </v-col>
                     <v-col cols="" class="text-right">
                       <v-btn
-                        v-if="
-                          !item[BID.answered] &&
-                          !item[BID.withdrawn] &&
-                          item[BID.deadline] == 0
-                        "
-                        :disabled="
-                          isTimeLimitExpired(
-                            item[BID.timestamp],
-                            item[BID.deadline]
-                          )
-                        "
+                        v-if="!item[BID.answered] && !item[BID.withdrawn] && item[BID.deadline] == 0"
+                        :disabled="isTimeLimitExpired(item[BID.timestamp],item[BID.deadline])"
                         color="seondary"
                         outlined
                         @click="withdrawExpiredBid(item[9])"
@@ -265,8 +225,8 @@ export default {
   },
   methods: {},
   mounted() {
-    if (this.isMetaMaskAuthenticated) {
-      this.$store.commit("bids/SET_TAB_FILTER", "Answered");
+    if (this.isMetaMaskAuthenticated){
+      this.$store.commit('bids/SET_TAB_FILTER','Answered')
       this.updateMyBids();
     }
   },

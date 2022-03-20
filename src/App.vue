@@ -36,6 +36,14 @@
               :disabled="!isMetaMaskAuthenticated"
               >Answer questions</v-btn
             >
+            <v-btn
+              :to="{ name: 'profile' }"
+              text
+              large
+              class="mx-1"
+              :disabled="!isMetaMaskAuthenticated"
+              >Profile</v-btn
+            >
           </div>
         </v-col>
         <v-col cols="4">
@@ -229,9 +237,14 @@
                             <v-card class="pa-5 center" outlined>
                               <v-row class="align-center">
                                 <v-col>
-                                  Messages are decrypted with help of the MetaMask client. 
-                                  You have to request your MetaMask client to provide your unique key by which your messages can be decrypted.
-                                  Your unique key is stored in the browser cache until you disconnect with your MetaMask wallet.</v-col>
+                                  Messages are decrypted with help of the
+                                  MetaMask client. You have to request your
+                                  MetaMask client to provide your unique key by
+                                  which your messages can be decrypted. Your
+                                  unique key is stored in the browser cache
+                                  until you disconnect with your MetaMask
+                                  wallet.</v-col
+                                >
                                 <!-- <v-col class="text-right">
                                   <v-btn
                                     color="primary"
@@ -412,6 +425,14 @@ export default {
     colorMode() {
       return this.$vuetify.theme.dark ? "dark" : "light";
     },
+    isKeysSet: {
+      get(){
+        return this.$store.state.auth.isKeysSet
+      },
+      set(value){
+        this.$store.commit("auth/SET_IS_KEYS_SET",value)
+      }
+    }
   },
   methods: {
     switchDarkMode() {
@@ -537,12 +558,21 @@ export default {
             this.$store.dispatch("auth/updateMetaMaskContract", contract);
             console.log("Contract:", contract);
 
+            //Check it the user already set its keys
+            const ownerPublicKey = await this.contract.publicKeys(this.address);
+            if (ownerPublicKey != '') {
+              this.isKeysSet = true
+            } else {
+              this.isKeysSet = false
+              this.$router.push("/profile")
+
+            }
 
             //Get decryptedPrivateKey if not found in local storage
-            if(localStorage.getItem('decryptedPrivateKey') == null){
-              this.decryptWithMetamaskDialog = true
+            if (localStorage.getItem("decryptedPrivateKey") == null && this.isKeysSet) {
+              this.decryptWithMetamaskDialog = true;
               const privateKey = await this.decryptPrivateKey();
-              this.decryptWithMetamaskDialog = false
+              this.decryptWithMetamaskDialog = false;
               console.log("XXXXXXXXX Decrypted private key: ", privateKey);
               this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
             }
@@ -559,8 +589,7 @@ export default {
         if (error.code == -32002) {
           this.metaMaskErrorText =
             "Connection to the MetaMask wallet has been already requested. Check your MetaMask, you may need to unlock it.";
-        }
-        else if (error.code == 4001) {
+        } else if (error.code == 4001) {
           this.metaMaskErrorText = error.message;
           this.disconnectMetaMask();
         } else {
@@ -590,10 +619,14 @@ export default {
   created() {
     //if metamask is isntalled and desktop devices, and already logged in then try to connect on load
     if (
-      this.isMetaMaskInstalled 
-      && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      && (localStorage.getItem('isMetaMaskAuthenticated'))
-      ) {
+      this.isMetaMaskInstalled &&
+      !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) &&
+      localStorage.getItem("isMetaMaskAuthenticated")
+      &&
+      localStorage.getItem("decryptedPrivateKey") != null
+    ) {
       this.connectToMetaMask();
     }
   },
