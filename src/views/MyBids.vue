@@ -54,16 +54,17 @@
                           outlined
                         ></v-textarea>
                       </v-col>
-                      <v-col cols="6">
+                      <v-col cols="12">
                         <v-text-field
                           name="bid"
                           label="Bid amount (ETC)"
                           id="bid"
                           v-model="question.bid"
+                          hint="An extra 1% fee will be added"
                           outlined
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="6">
+                      <v-col cols="12">
                         <v-text-field
                           name="time_limit"
                           label="Time limit (s)"
@@ -93,7 +94,12 @@
           </v-col>
         </v-row>
         <Tab
-          :tab-items="[{ tab: 'Answered' }, { tab: 'Pending' }, { tab: 'All' }]"
+          :tab-items="[
+            { tab: 'Answered' },
+            { tab: 'Pending' },
+            { tab: 'Expired' },
+            { tab: 'All' },
+          ]"
         ></Tab>
         <template v-for="(item, index) in sortedBids">
           <template>
@@ -141,18 +147,28 @@
                     <v-col>
                       <v-tooltip right>
                         <template v-slot:activator="{ on, attrs }">
-                          <v-chip v-bind="attrs" v-on="on"
+                          <v-chip
+                            v-bind="attrs"
+                            v-on="on"
+                            @click="
+                              copyAddress('question' + item[BID.questionId])
+                            "
                             >To:
                             {{
                               shortAddress(item[BID.beneficiaryAddress])
                             }}</v-chip
                           >
                         </template>
-                        <span
-                          >{{ item[BID.beneficiaryAddress] }}
-                          <v-icon dark> mdi-content-copy </v-icon></span
-                        >
+                        <v-icon>mdi-content-copy</v-icon>
+                        <span>{{ item[BID.beneficiaryAddress] }} </span>
                       </v-tooltip>
+                      <input
+                        v-on:focus="$event.target.select()"
+                        :ref="'question' + item[BID.questionId]"
+                        readonly
+                        type="hidden"
+                        :value="item[BID.beneficiaryAddress]"
+                      />
                     </v-col>
                     <v-col class="text-right"
                       >{{ parseInt(item[BID.value]) / 1e18 }} ETH
@@ -162,12 +178,47 @@
 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <!-- <v-col cols="" v-if="!item[BID.timestamp]" class="text-body-2">
-                      Locked until: {{ dueDate(item[BID.value],item[BID.deadline]) }}
-                    </v-col> -->
+                    <v-col
+                      cols=""
+                      v-if="
+                        !item[BID.answered] &&
+                        !item[BID.withdrawn] &&
+                        item[BID.deadline] != 0
+                      "
+                      class="text-body-2"
+                    >
+                      <span
+                        v-if="
+                          countdown(item[BID.timestamp], item[BID.deadline]) > 0
+                        "
+                      >
+                        Expires in
+                        {{
+                          formatCountdownTime(
+                            countdown(item[BID.timestamp], item[BID.deadline])
+                          )
+                        }}
+                        at
+                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                      </span>
+                      <span v-else>
+                        Expired at
+                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                      </span>
+                    </v-col>
                     <v-col cols="" class="text-right">
                       <v-btn
-                        v-if="!item[BID.withdrawn]"
+                        v-if="
+                          !item[BID.answered] &&
+                          !item[BID.withdrawn] &&
+                          item[BID.deadline] == 0
+                        "
+                        :disabled="
+                          isTimeLimitExpired(
+                            item[BID.timestamp],
+                            item[BID.deadline]
+                          )
+                        "
                         color="seondary"
                         outlined
                         @click="withdrawExpiredBid(item[9])"
@@ -203,7 +254,7 @@ export default {
         toAddress: "0x13c5DB04644f9cfE79C79bBB1a74aaB9A04C98ea",
         bid: 0,
         text: "randomstring_" + Math.random().toString().substr(2, 5),
-        timeLimit: 60,
+        timeLimit: 0,
       },
     };
   },
@@ -214,7 +265,10 @@ export default {
   },
   methods: {},
   mounted() {
-    if (this.isMetaMaskAuthenticated) this.updateMyBids();
+    if (this.isMetaMaskAuthenticated) {
+      this.$store.commit("bids/SET_TAB_FILTER", "Answered");
+      this.updateMyBids();
+    }
   },
 };
 </script>

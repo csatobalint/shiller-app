@@ -60,16 +60,16 @@ export default {
     },
     sortedBids(){
         if(this.sortBy == 'Date' && this.sortDirection == 'desc'){
-          return [...this.filteredBids].sort((a,b) => (a[4]-b[4]))
+          return [...this.filteredBids].sort((a,b) => -(a[this.BID.timestamp]-b[this.BID.timestamp]))
         } 
         else if(this.sortBy == 'Date' && this.sortDirection == 'asc'){
-          return [...this.filteredBids].sort((a,b) => -(a[4]-b[4]))
+          return [...this.filteredBids].sort((a,b) => (a[this.BID.timestamp]-b[this.BID.timestamp]))
         }
         else if(this.sortBy == 'Bid' && this.sortDirection == 'desc'){
-          return [...this.filteredBids].sort((a,b) => -(a[5]-b[5]))
+          return [...this.filteredBids].sort((a,b) => -(a[this.BID.value]-b[this.BID.value]))
         } 
         else if(this.sortBy == 'Bid' && this.sortDirection == 'asc'){
-          return [...this.filteredBids].sort((a,b) => (a[5]-b[5]))
+          return [...this.filteredBids].sort((a,b) => (a[this.BID.value]-b[this.BID.value]))
         } else{
           return this.filteredBids
         }
@@ -86,21 +86,22 @@ export default {
     async getBid(questionId) {
 
       const data = await this.contract.getBid(questionId, this.options);
-      //await this.provider.call(data);
+      //const response = await this.provider.call(data);
 
+      // create a copy of the bidData (readonly)
       let decryptedData = data.slice(0,8).concat([[...data[8]]])
       console.log(decryptedData);
       //console.log(response);
 
-      //i am the owner
+      //i am the owner, decrypt question and answer crypted with owener public key with owner private key
       if (decryptedData[this.BID.ownerAddress] == this.address) {
-        decryptedData[this.BID.messages][0] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][0])
-        decryptedData[this.BID.messages][2] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][2])
+        decryptedData[this.BID.messages][this.BID.questionForOwner] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.questionForOwner])
+        decryptedData[this.BID.messages][this.BID.answerForOwner] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.answerForOwner])
       } 
       // i am the beneficaiary
       else {
-        decryptedData[this.BID.messages][1] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][1])
-        decryptedData[this.BID.messages][3] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][3])
+        decryptedData[this.BID.messages][this.BID.questionForBenificiary] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.questionForBenificiary])
+        decryptedData[this.BID.messages][this.BID.answerForBenificiary] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.answerForBenificiary])
       }
 
       return decryptedData;
@@ -108,17 +109,17 @@ export default {
     async getBidsContract() {
 
       const data = await this.contract.getBidsContract(this.options);
-      //await this.provider.call(data);
+      // const response = await this.provider.call(data);
       console.log(data);
-      //console.log(response);
+      // console.log(response);
       return data;
     },
     async getBidsBeneficiary() {
 
       const data = await this.contract.getBidsBeneficiary(this.options);
-      const response = await this.provider.call(data);
+      // const response = await this.provider.call(data);
       console.log(data);
-      console.log(response);
+      // console.log(response);
       return data;
     },
     async makeNew() {
@@ -128,7 +129,7 @@ export default {
       console.log(identityPublicKeyBeneficiary)
 
       // if beneficiaryAddress public key is not generated already his keys
-      if(identityPublicKeyBeneficiary !== ''){
+      if(identityPublicKeyBeneficiary == ''){
         throw new Error('Beneficiary is not already registered.')
       }
       
@@ -149,87 +150,73 @@ export default {
       const isOwnerKeysAlreadySet = encryptedPrivateKey.length !== 0
       console.log(isOwnerKeysAlreadySet);
            
-
-      
-
       let data = null;
 
       if (!isOwnerKeysAlreadySet) {
         console.log('isOwnerKeysAlreadySet: ',isOwnerKeysAlreadySet)
-        const generatedKeys = await this.generateKeys()
-        console.log(generatedKeys)
-        //from user public key
-        const identityPublicKeyOwner = generatedKeys.identity.publicKey;
+        const encryptedKeys = await this.generateEncryptedKeys()
+        console.log(encryptedKeys)
+
+        const encryptedPublicKeyOwner = encryptedKeys.identity.publicKey;
         //encrypted question by from public key
         const encryptedQuestionOwner = EthCrypto.cipher.stringify(
-          await EthCrypto.encryptWithPublicKey(identityPublicKeyOwner, this.question.text)
+          await EthCrypto.encryptWithPublicKey(encryptedPublicKeyOwner, this.question.text)
         )
         data = await this.contract.populateTransaction.makeNewWithSetKey(
           this.question.toAddress, // toAddress
           encryptedQuestionOwner, //question text
           encryptedQuestionBeneficiary,
-          0, //Math.abs(this.question.timeLimit), // time limit [s]  ----> if not =0, then it works
-          generatedKeys.identity.publicKey, // fromAddress generated public key
-          generatedKeys.encryptedPrivateKey, // fromAddress encrypted private key
+          Math.abs(this.question.timeLimit), // time limit [s]  ----> if not =0, then it works
+          encryptedKeys.identity.publicKey, // fromAddress encrypted public key
+          encryptedKeys.encryptedPrivateKey, // fromAddress encrypted private key
           0 // bidlimit TODO
         );
       }
       else{
         console.log('isOwnerKeysAlreadySet: ',isOwnerKeysAlreadySet)
-        //from user public key
-        const identityPublicKeyOwner = await this.contract.publicKeys(this.address);
+        const encryptedPublicKeyOwner = await this.getPublicKey();
         //encrypted question by from public key
         const encryptedQuestionOwner = EthCrypto.cipher.stringify(
-          await EthCrypto.encryptWithPublicKey(identityPublicKeyOwner, this.question.text)
+          await EthCrypto.encryptWithPublicKey(encryptedPublicKeyOwner, this.question.text)
         )
 
         data = await this.contract.populateTransaction.makeNew(
           this.question.toAddress, // toAddress
           encryptedQuestionOwner, //question encrypted by to user public key
           encryptedQuestionBeneficiary, //question encrypted by to user public key
-          0 //Math.abs(this.question.timeLimit) // time limit [s]
+          Math.abs(this.question.timeLimit) //Math.abs(this.question.timeLimit) // time limit [s]
         );
       }
 
-      data.value = ethers.utils.parseEther(this.question.bid.toString());
+      let fee = 1; // 1%
+      let bidAmount = Number(this.question.bid)*100/(100-fee);
+      data.value = ethers.utils.parseEther(bidAmount.toString());
       console.log(data);
   
-      const response = await this.signer.populateTransaction(data);
-      let transaction = await this.signer.sendTransaction(response);
-      console.log(transaction)
-
-      transaction = await this.provider.getTransaction ( transaction.hash )
-
-      while (transaction.blockNumber === null) {
-        await this.sleep(100)
-        transaction = await this.provider.getTransaction ( transaction.hash )
-      }
-      
-      const transactionReceipt = await this.provider.getTransactionReceipt(transaction.hash)
-      console.log(transactionReceipt);
+      await this.waitForMetaMaskTransaction(data);
+      await this.updateMyBids();
+      this.dialog = false
 
     },
-    async withdrawExpiredBid(id) {
-
-  
+    async withdrawExpiredBid(questionId) {
         const data = await this.contract.populateTransaction.withdrawExpiredBid(
-          id //question text
+          questionId
         );
-        data.value = 0;
-        console.log(data);
+        // data.value = 0;
+        // console.log(data);
   
-        const response = await this.signer.populateTransaction(data);
-        this.signer.sendTransaction(response);
+        await this.waitForMetaMaskTransaction(data);
+        await this.updateMyBids();
     },
-    async rewardSolvedBid(id,answer,ownerAddress) {
-        console.log(id,answer,ownerAddress)
+    async rewardSolvedBid(questionId,answer,ownerAddress) {
+        console.log(questionId,answer,ownerAddress)
 
         // ownerAddress public key to use for encryption
-        const identityPublicKeyOwner = await this.contract.publicKeys(ownerAddress);
-        console.log(identityPublicKeyOwner)
+        const encryptedPublicKeyOwner = await this.contract.publicKeys(ownerAddress);
+        console.log(encryptedPublicKeyOwner)
 
-        const encryptedAnswerByOwner = await EthCrypto.cipher.stringify(
-          await EthCrypto.encryptWithPublicKey(identityPublicKeyOwner, answer)
+        const encryptedAnswerByOwner = EthCrypto.cipher.stringify(
+          await EthCrypto.encryptWithPublicKey(encryptedPublicKeyOwner, answer)
         )
         console.log(encryptedAnswerByOwner)
 
@@ -237,32 +224,31 @@ export default {
         const identityPublicKeyBeneficiary = await this.contract.publicKeys(this.address);
         console.log(identityPublicKeyBeneficiary)
 
-        const encryptedAnswerByBeneficiary = await EthCrypto.cipher.stringify(
+        const encryptedAnswerByBeneficiary = EthCrypto.cipher.stringify(
           await EthCrypto.encryptWithPublicKey(identityPublicKeyBeneficiary, answer)
         )
         console.log(encryptedAnswerByBeneficiary)
   
-        console.log(id)
+        console.log(questionId)
         console.log(encryptedAnswerByOwner)
         console.log(encryptedAnswerByBeneficiary)
 
         const data = await this.contract.populateTransaction.rewardSolvedBid(
-          id, //question id
+          questionId,
           encryptedAnswerByOwner,
           encryptedAnswerByBeneficiary
         );
         data.value = 0;
         console.log(data);
   
-        const response = await this.signer.populateTransaction(data);
-        this.signer.sendTransaction(response);
+        await this.waitForMetaMaskTransaction(data);
+        await this.updateBidsToMe();
     },
-    async generateKeys(){
+    async generateEncryptedKeys(){
       const metamaskPublicKey = await ethereum.request({ 
           method: "eth_getEncryptionPublicKey", 
           params: [this.address] 
       })
-
       console.log("Pubkey for account ", this.address, " is: ", metamaskPublicKey);
 
       const identity  = EthCrypto.createIdentity();
@@ -279,24 +265,6 @@ export default {
        console.log("Encrypted privatekey: ", encryptedPrivateKey)
 
        return {identity, encryptedPrivateKey}
-
-
-      //  const contract = new ethers.Contract(
-      //   process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
-      //   process.env.VUE_APP_ABI,
-      //   this.provider
-      // );
-
-      //  const data = await contract.populateTransaction.setKeysWithBidLimit(
-      //   identity.publicKey,
-      //   encryptedPrivateKey
-      // );
-
-      // console.log("Data: ", data)
-      // const response = await this.signer.populateTransaction(data);
-      // console.log("Response: ", response)
-      // const tx = this.signer.sendTransaction(response);
-      // console.log("Tx: ", tx);
     },
     async setKeysWithBidLimit(){
       const metamaskPublicKey = await ethereum.request({ 
@@ -336,8 +304,22 @@ export default {
       const tx = this.signer.sendTransaction(response);
       console.log("Tx: ", tx);
     },
+    async getPublicKey() {
+      const data = await this.contract.publicKeys(this.address);
+      //const response = await this.provider.call(data);
+      // console.log(data);
+      // console.log(response);
+      return data;
+    },
     async getPrivateKey() {
-      const data = await this.contract.getPrivateKey(this.options);
+      const data = await this.contract.getPrivateKey(this.address);
+      //const response = await this.provider.call(data);
+      // console.log(data);
+      // console.log(response);
+      return data;
+    },
+    async getBidLimit() {
+      const data = await this.contract.bidLimits(this.address);
       //const response = await this.provider.call(data);
       // console.log(data);
       // console.log(response);
@@ -358,6 +340,19 @@ export default {
         }
         
       }
+    },
+    async waitForMetaMaskTransaction(data){
+      const response = await this.signer.populateTransaction(data);
+      //console.log(response);
+      let transaction = await this.signer.sendTransaction(response);
+      transaction = await this.provider.getTransaction ( transaction.hash )
+      while (transaction.blockNumber === null) {
+        await this.sleep(100)
+        transaction = await this.provider.getTransaction ( transaction.hash )
+      }
+      const transactionReceipt = await this.provider.getTransactionReceipt(transaction.hash)
+      //console.log(transactionReceipt);
+      return transactionReceipt;
     },
     async updateMyBids() {
         const ids = await this.getBidsContract();
@@ -386,16 +381,39 @@ export default {
     shortAddress(address){
         return address.slice(0, 5) + "..." + address.slice(-4);
     },
-    dueDate(timestamp,timeLimit){
-      const shift = timeLimit
-      const dueStamp = Number(timestamp) + Number(shift)
+    dueStamp(timestamp,timeLimit){
+      const dueStamp = Number(timestamp) + Number(timeLimit)
       const dueStampHex = "0x" + Number(dueStamp).toString(16)
-      console.log(timestamp)
-      console.log(dueStamp)
-      console.log(dueStampHex)
+      // console.log(timestamp)
+      // console.log(dueStamp)
+      // console.log(dueStampHex)
   
       return this.$options.filters.hexToDate(dueStampHex)
     },
+    isTimeLimitExpired(timestamp,timeLimit){
+      //if there is no expiration then the time limit was set to 0
+      if(timeLimit == 0)
+        return false;
+      const dueStamp = Number(timestamp) + Number(timeLimit)
+      return dueStamp > this.now/1000
+    },
+    countdown(timestamp,timeLimit){
+      const dueStamp = Number(timestamp) + Number(timeLimit)
+      if(dueStamp < this.now/1000){
+        return 0
+      }
+      else{
+        let distance = dueStamp - this.now/1000
+        distance = distance.toFixed(0)
+        return distance
+      }
+    },
+    formatCountdownTime(distance){
+      let hours = Math.floor((distance % (1 * 60 * 60 * 24)) / (1 * 60 * 60));
+      let minutes = Math.floor((distance % (1 * 60 * 60)) / (1 * 60));
+      let seconds = Math.floor((distance % (1 * 60)) / 1);
+      return hours + "h " + minutes + "m " + seconds + "s "
+    }
   },
   mounted() {
     console.log("hello from mixin!");

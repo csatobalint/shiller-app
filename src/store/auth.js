@@ -13,7 +13,7 @@ const auth = {
         metamask: null,
         userName: localStorage.getItem('userName'),
         metaMask: null,
-        decryptedPrivateKey: ""
+        decryptedPrivateKey: localStorage.getItem('decryptedPrivateKey')
     },
 
     getters: {
@@ -83,16 +83,19 @@ const auth = {
       },
       SET_METAMASK_IS_AUTHENTICATED(state){
         state.isMetaMaskAuthenticated = true
-        //localStorage.setItem('isMetaMaskAuthenticated', true)
+        localStorage.setItem('isMetaMaskAuthenticated', true)
+      },
+      SET_DECRYPTED_PRIVATE_KEY(state, data) {
+        state.decryptedPrivateKey = data;
+        localStorage.setItem('decryptedPrivateKey', data)
       },
       DELETE_METAMASK_AUTH(state){
         state.metaMask = null
         state.isMetaMaskAuthenticated = false
         localStorage.removeItem('metaMask')
         localStorage.removeItem('isAuthenticated')
-      },
-      SET_DECRYPTED_PRIVATE_KEY(state, data) {
-        state.decryptedPrivateKey = data;
+        localStorage.removeItem('isMetaMaskAuthenticated')
+        localStorage.removeItem('decryptedPrivateKey')
       }
     },
     actions: {

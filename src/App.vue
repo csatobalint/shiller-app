@@ -185,7 +185,11 @@
                                 <v-icon>mdi-link</v-icon> View on
                                 explorer</v-btn
                               >
-                              <v-btn small text @click="copyAddress('addressInput')">
+                              <v-btn
+                                small
+                                text
+                                @click="copyAddress('addressInput')"
+                              >
                                 <v-icon>mdi-content-copy</v-icon> C
                                 <span class="text-lowercase"
                                   >opy address</span
@@ -203,6 +207,48 @@
                         </v-card>
                       </v-col>
                     </v-row>
+                    <v-dialog v-model="decryptWithMetamaskDialog" width="400">
+                      <!-- Decrypt dialog -->
+                      <v-card class="rounded-lg pa-4" outlined>
+                        <v-row class="align-center">
+                          <v-col class="text-h6">Decrypt request</v-col>
+                          <v-col class="text-right">
+                            <v-btn
+                              fab
+                              small
+                              elevation="0"
+                              color="transparent"
+                              @click="decryptWithMetamaskDialog = false"
+                            >
+                              <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                          </v-col>
+                        </v-row>
+                        <v-row>
+                          <v-col>
+                            <v-card class="pa-5 center" outlined>
+                              <v-row class="align-center">
+                                <v-col>
+                                  Messages are decrypted with help of the MetaMask client. 
+                                  You have to request your MetaMask client to provide your unique key by which your messages can be decrypted.
+                                  Your unique key is stored in the browser cache until you disconnect with your MetaMask wallet.</v-col>
+                                <!-- <v-col class="text-right">
+                                  <v-btn
+                                    color="primary"
+                                    rounded
+                                    outlined
+                                    small
+                                    @click="disconnectMetaMask"
+                                  >
+                                    Remember next time
+                                  </v-btn>
+                                </v-col> -->
+                              </v-row>
+                            </v-card>
+                          </v-col>
+                        </v-row>
+                      </v-card>
+                    </v-dialog>
                   </v-card>
                 </v-dialog>
               </div>
@@ -329,6 +375,7 @@ export default {
       connectWalletButtonText: "Connect to a wallet",
       connectWalletButtonDisabled: false,
       connectWalletDialog: false,
+      decryptWithMetamaskDialog: false,
       metaMaskErrorText: "",
       metaMaskErrorDialog: false,
       showMenu: false,
@@ -382,7 +429,6 @@ export default {
         chainName[ethereum.networkVersion]
       }etherscan.io/address/${this.address}`;
     },
-
 
     // NOT USED
     signOut() {
@@ -491,10 +537,15 @@ export default {
             this.$store.dispatch("auth/updateMetaMaskContract", contract);
             console.log("Contract:", contract);
 
-            //Get decryptedPrivateKey
-            const privateKey = await this.decryptPrivateKey();
-            console.log("XXXXXXXXX Decrypted private key: ", privateKey);
-            this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
+
+            //Get decryptedPrivateKey if not found in local storage
+            if(localStorage.getItem('decryptedPrivateKey') == null){
+              this.decryptWithMetamaskDialog = true
+              const privateKey = await this.decryptPrivateKey();
+              this.decryptWithMetamaskDialog = false
+              console.log("XXXXXXXXX Decrypted private key: ", privateKey);
+              this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
+            }
           } else {
             this.connectWalletButtonDisabled = true;
             //On this object we have startOnboarding which will start the onboarding process for our end user
@@ -508,6 +559,10 @@ export default {
         if (error.code == -32002) {
           this.metaMaskErrorText =
             "Connection to the MetaMask wallet has been already requested. Check your MetaMask, you may need to unlock it.";
+        }
+        else if (error.code == 4001) {
+          this.metaMaskErrorText = error.message;
+          this.disconnectMetaMask();
         } else {
           this.metaMaskErrorText = error.message;
         }
@@ -533,10 +588,14 @@ export default {
     },
   },
   created() {
-    // //if metamask is isntalled and desktop devices, then try to connect on load
-    // if (this.isMetaMaskInstalled && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    //   this.connectToMetaMask();
-    // }
+    //if metamask is isntalled and desktop devices, and already logged in then try to connect on load
+    if (
+      this.isMetaMaskInstalled 
+      && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      && (localStorage.getItem('isMetaMaskAuthenticated'))
+      ) {
+      this.connectToMetaMask();
+    }
   },
 };
 </script>

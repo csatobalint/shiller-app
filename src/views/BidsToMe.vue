@@ -18,14 +18,19 @@
           </v-col>
         </v-row>
         <Tab
-          :tab-items="[{ tab: 'Pending' }, { tab: 'Answered' }, { tab: 'All' }]"
+          :tab-items="[
+            { tab: 'Pending' },
+            { tab: 'Answered' },
+            { tab: 'Expired' },
+            { tab: 'All' },
+          ]"
         ></Tab>
         <template v-for="(item, index) in sortedBids">
           <template v-if="!item[BID.withdrawn]">
             <v-row :key="index" class="pb-5">
               <v-card
                 class="rounded-xl pa-2"
-                :class="[item[BID.timestamp] ? 'answerQuestionBackground' : '']"
+                :class="[item[BID.answered] ? 'answerQuestionBackground' : '']"
                 width="100%"
               >
                 <v-card-subtitle class="pl-5">
@@ -41,11 +46,21 @@
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col> Q: {{ item[BID.messages][1] }} </v-col>
+                        <v-col> {{ item[BID.messages][1] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
-                  <span>Answer</span>
+                  <span
+                    v-show="
+                      !item[BID.withdrawn] &&
+                      ((item[BID.deadline] != 0 &&
+                        countdown(item[BID.timestamp], item[BID.deadline]) >
+                          0) ||
+                        item[BID.deadline] == 0)
+                    "
+                  >
+                    Answer
+                  </span>
                   <v-card
                     :style="questionAnswerCardBackgroundColor"
                     class="rounded-lg"
@@ -55,7 +70,7 @@
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
-                        <v-col> A: {{ item[BID.messages][3] }} </v-col>
+                        <v-col> {{ item[BID.messages][3] }} </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
@@ -64,15 +79,35 @@
                     class="rounded-lg"
                     outlined
                     width="100%"
+                    v-show="
+                      !item[BID.answered] &&
+                      !item[BID.withdrawn] &&
+                      ((item[BID.deadline] != 0 &&
+                        countdown(item[BID.timestamp], item[BID.deadline]) >
+                          0) ||
+                        item[BID.deadline] == 0)
+                    "
                     v-else
                   >
                     <v-card-text class="text-body-1">
                       <v-row>
                         <v-col>
                           <v-textarea
+                            :disabled="
+                              !(
+                                !item[BID.answered] &&
+                                !item[BID.withdrawn] &&
+                                ((item[BID.deadline] != 0 &&
+                                  countdown(
+                                    item[BID.timestamp],
+                                    item[BID.deadline]
+                                  ) > 0) ||
+                                  item[BID.deadline] == 0)
+                              )
+                            "
                             name="answer"
                             label=""
-                            v-model="answers[item[9]]"
+                            v-model="answers[item[BID.questionId]]"
                           ></v-textarea>
                         </v-col>
                       </v-row>
@@ -82,12 +117,30 @@
                 <v-divider class="mx-4"></v-divider>
                 <v-card-title class="text-body-1">
                   <v-row>
-                    <v-col
-                      ><v-chip
-                        >From:
-                        {{ shortAddress(item[BID.ownerAddress]) }}</v-chip
-                      ></v-col
-                    >
+                    <v-col>
+                      <v-tooltip right>
+                        <template v-slot:activator="{ on, attrs }">
+                          <v-chip
+                            v-bind="attrs"
+                            v-on="on"
+                            @click="
+                              copyAddress('question' + item[BID.questionId])
+                            "
+                            >From:
+                            {{ shortAddress(item[BID.ownerAddress]) }}</v-chip
+                          >
+                        </template>
+                        <v-icon>mdi-content-copy</v-icon>
+                        <span>{{ item[BID.ownerAddress] }} </span>
+                      </v-tooltip>
+                      <input
+                        v-on:focus="$event.target.select()"
+                        :ref="'question' + item[BID.questionId]"
+                        readonly
+                        type="hidden"
+                        :value="item[BID.ownerAddress]"
+                      />
+                    </v-col>
                     <v-col class="text-right"
                       >{{ parseInt(item[BID.sum]) / 1e18 }} ETH
                     </v-col>
@@ -96,18 +149,50 @@
 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <!-- <v-col cols="" v-if="!item[BID.timestamp]" class="text-body-2">
-                      Expiries at: {{ dueDate(item[BID.value],item[BID.deadline]) }}
-                    </v-col> -->
+                    <v-col
+                      cols=""
+                      v-if="
+                        !item[BID.answered] &&
+                        !item[BID.withdrawn] &&
+                        item[BID.deadline] != 0
+                      "
+                      class="text-body-2"
+                    >
+                      <span
+                        v-if="
+                          countdown(item[BID.timestamp], item[BID.deadline]) > 0
+                        "
+                      >
+                        Expires in
+                        {{
+                          formatCountdownTime(
+                            countdown(item[BID.timestamp], item[BID.deadline])
+                          )
+                        }}
+                        at
+                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                      </span>
+                      <span v-else>
+                        Expired at
+                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                      </span>
+                    </v-col>
                     <v-col cols="" class="text-right">
                       <v-btn
-                        v-if="!item[BID.withdrawn]"
+                        v-if="
+                          !item[BID.answered] &&
+                          !item[BID.withdrawn] &&
+                          ((item[BID.deadline] != 0 &&
+                            countdown(item[BID.timestamp], item[BID.deadline]) >
+                              0) ||
+                            item[BID.deadline] == 0)
+                        "
                         color="seondary"
                         outlined
                         @click="
                           rewardSolvedBid(
-                            item[9],
-                            answers[item[9]],
+                            item[BID.questionId],
+                            answers[item[BID.questionId]],
                             item[BID.ownerAddress]
                           )
                         "
@@ -147,7 +232,10 @@ export default {
     }),
   },
   mounted() {
-    if (this.isMetaMaskAuthenticated) this.updateBidsToMe();
+    if (this.isMetaMaskAuthenticated) {
+      this.$store.commit("bids/SET_TAB_FILTER", "Pending");
+      this.updateBidsToMe();
+    }
   },
 };
 </script>

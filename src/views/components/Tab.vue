@@ -43,7 +43,7 @@ export default {
   props: {
     tabItems: {
       type: Array,
-      default: () => [{ tab: "Answered" }, { tab: "Pending" }, { tab: "All" }]
+      default: () => [{ tab: "Answered" }, { tab: "Pending" }, { tab: "Expired" }, { tab: "All" }]
     },
   },
   data() {
