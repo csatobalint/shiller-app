@@ -33,31 +33,13 @@
               text
               large
               class="mx-1"
-              :disabled="!isMetaMaskAuthenticated"
+              :disabled="!isMetaMaskAuthenticated || !isKeysSet"
               >Answer questions</v-btn
-            >
-            <v-btn
-              :to="{ name: 'profile' }"
-              text
-              large
-              class="mx-1"
-              :disabled="!isMetaMaskAuthenticated"
-              >Profile</v-btn
             >
           </div>
         </v-col>
         <v-col cols="4">
           <div class="d-flex justify-end">
-            <!-- <v-btn
-              color="primary"
-              rounded
-              outlined
-              @click="connectToMetaMask"
-              :disabled="connectWalletButtonDisabled"
-              :loading="connectWalletButtonDisabled"
-            >
-              {{ metaMaskButtonText }}
-            </v-btn> -->
             <v-btn
               outlined
               @click="switchDarkMode"
@@ -172,7 +154,7 @@
                           </v-row>
                           <v-row class="align-center">
                             <v-col
-                              cols="12"
+                              cols="6"
                               class="align-center d-flex flex-row gap-4"
                             >
                               <img
@@ -183,6 +165,21 @@
                               />
                               <span>{{ shortAdress }}</span>
                             </v-col>
+                            <v-col
+                              cols="6"
+                              class="d-flex flex-row-reverse gap-4"
+                            >
+                              <v-btn
+                                color="secondary"
+                                rounded
+                                text
+                                href="#"
+                                :to="{ name: 'profile' }"
+                                @click="connectWalletDialog = false"
+                              >
+                                <v-icon>mdi-cog</v-icon>&nbsp;Profile
+                              </v-btn>
+                            </v-col>
                             <v-col class="12">
                               <v-btn
                                 small
@@ -190,19 +187,18 @@
                                 target="_blank"
                                 :href="getEthersScanAddressPage()"
                               >
-                                <v-icon>mdi-link</v-icon> View on
-                                explorer</v-btn
-                              >
+                                <v-icon>mdi-link</v-icon> View on explorer
+                              </v-btn>
                               <v-btn
                                 small
                                 text
                                 @click="copyAddress('addressInput')"
                               >
-                                <v-icon>mdi-content-copy</v-icon> C
-                                <span class="text-lowercase"
+                                <v-icon>mdi-content-copy</v-icon> C<span
+                                  class="text-lowercase"
                                   >opy address</span
-                                ></v-btn
-                              >
+                                >
+                              </v-btn>
                               <input
                                 v-on:focus="$event.target.select()"
                                 ref="addressInput"
@@ -215,53 +211,6 @@
                         </v-card>
                       </v-col>
                     </v-row>
-                    <v-dialog v-model="decryptWithMetamaskDialog" width="400">
-                      <!-- Decrypt dialog -->
-                      <v-card class="rounded-lg pa-4" outlined>
-                        <v-row class="align-center">
-                          <v-col class="text-h6">Decrypt request</v-col>
-                          <v-col class="text-right">
-                            <v-btn
-                              fab
-                              small
-                              elevation="0"
-                              color="transparent"
-                              @click="decryptWithMetamaskDialog = false"
-                            >
-                              <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                          </v-col>
-                        </v-row>
-                        <v-row>
-                          <v-col>
-                            <v-card class="pa-5 center" outlined>
-                              <v-row class="align-center">
-                                <v-col>
-                                  Messages are decrypted with help of the
-                                  MetaMask client. You have to request your
-                                  MetaMask client to provide your unique key by
-                                  which your messages can be decrypted. Your
-                                  unique key is stored in the browser cache
-                                  until you disconnect with your MetaMask
-                                  wallet.</v-col
-                                >
-                                <!-- <v-col class="text-right">
-                                  <v-btn
-                                    color="primary"
-                                    rounded
-                                    outlined
-                                    small
-                                    @click="disconnectMetaMask"
-                                  >
-                                    Remember next time
-                                  </v-btn>
-                                </v-col> -->
-                              </v-row>
-                            </v-card>
-                          </v-col>
-                        </v-row>
-                      </v-card>
-                    </v-dialog>
                   </v-card>
                 </v-dialog>
               </div>
@@ -336,22 +285,123 @@
         </template>
       </template> -->
     </v-app-bar>
+
     <v-main class="gradientBackgroundColor">
       <template>
+        <v-progress-linear
+          v-if="isLoading"
+          height="5"
+          style="margin-bottom: -5px"
+          indeterminate
+          color="primary"
+        ></v-progress-linear>
+      </template>
+      <template name="system_components">
         <div class="text-center ma-2">
-          <v-snackbar v-model="metaMaskErrorDialog">
-            {{ metaMaskErrorText }}
-            <template v-slot:action="{ attrs }">
-              <v-btn
-                color="primary"
-                text
-                v-bind="attrs"
-                @click="metaMaskErrorDialog = false"
-              >
-                Close
-              </v-btn>
-            </template>
-          </v-snackbar>
+          <div v-if="false" id="buttons">
+            <v-btn
+              :disabled="isLoading"
+              :loading="isLoading"
+              class="white--text"
+              color="purple darken-2"
+              @click="startLoading()"
+            >
+              Start loading
+            </v-btn>
+            <v-btn
+              :disabled="!isLoading"
+              :loading="!isLoading"
+              class="white--text"
+              color="purple darken-2"
+              @click="endLoading()"
+            >
+              Stop loading
+            </v-btn>
+            <v-btn
+              color="primary"
+              @click="
+                openNotificationSnackbar('testsfs dfdsfs gdasg sdg asdg adsg')
+              "
+            >
+              Test notification snackbar
+            </v-btn>
+            <v-btn
+              color="primary"
+              @click="
+                openNotificationDialog({
+                  title: 'test',
+                  text: 'text',
+                })
+              "
+            >
+              From the top
+            </v-btn>
+          </div>
+
+          <!-- NOTIFICATION SNACKBAR -->
+          <template name="isNotificationSnackbar">
+            <v-snackbar v-model="isNotificationSnackbar" timeout="-1">
+              {{ isNotificationSnackbarText }}
+              <template v-slot:action="{ attrs }">
+                <v-btn
+                  color="primary"
+                  text
+                  v-bind="attrs"
+                  @click="closeNotificationSnackbar()"
+                >
+                  Close
+                </v-btn>
+              </template>
+            </v-snackbar>
+          </template>
+          <!-- GLOBAL LOADER DIALOG -->
+          <template name="isLoading">
+            <!--
+              <v-dialog v-model="isLoading" hide-overlay persistent width="300">
+                <v-card color="primary" dark class="pt-2">
+                  <v-card-text>
+                    Please stand by
+                    <v-progress-linear
+                      indeterminate
+                      color="white"
+                      class="mb-0"
+                    ></v-progress-linear>
+                  </v-card-text>
+                </v-card>
+              </v-dialog>-->
+          </template>
+          <!-- NOTIFICATION DIALOG -->
+          <template name="isNotificationDialog">
+            <v-dialog v-model="isNotificationDialog" max-width="600">
+              <v-card class="rounded-lg pa-4" outlined>
+                <v-row class="align-center">
+                  <v-col class="text-h6">{{ isNotificationDialogTitle }}</v-col>
+                  <v-col class="text-right">
+                    <v-btn
+                      fab
+                      small
+                      elevation="0"
+                      color="transparent"
+                      @click="closeNotificationDialog()"
+                    >
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col>
+                    <v-card class="pa-5 center" outlined>
+                      <v-row class="align-center">
+                        <v-col>
+                          {{ isNotificationDialogText }}
+                        </v-col>
+                      </v-row>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-dialog>
+          </template>
         </div>
       </template>
       <!-- Provides the application the proper gutter -->
@@ -360,19 +410,19 @@
         <router-view></router-view>
       </v-container>
     </v-main>
-    <!-- <v-footer color="blue-grey darken-4 lighten-1" padless>
+    <v-footer color="gradientAppBarColor" padless>
       <v-layout justify-center wrap>
         <v-flex py-4 text-center white--text xs12>
           {{ new Date().getFullYear() }} — <strong>Shiller Crypto</strong>
         </v-flex>
       </v-layout>
-    </v-footer> -->
+    </v-footer>
   </v-app>
 </template>
 
 <script>
 import "vue-router";
-import { mapGetters } from "vuex";
+import { mapState } from "vuex";
 import firebase from "firebase";
 import MetaMaskOnboarding from "@metamask/onboarding";
 const { ethereum } = window;
@@ -384,13 +434,9 @@ export default {
   mixins: [globaMixin],
   data() {
     return {
-      contractAddress: process.env.VUE_APP_CONTRACT_ADDRESS.toLowerCase(),
       connectWalletButtonText: "Connect to a wallet",
       connectWalletButtonDisabled: false,
       connectWalletDialog: false,
-      decryptWithMetamaskDialog: false,
-      metaMaskErrorText: "",
-      metaMaskErrorDialog: false,
       showMenu: false,
       selectedItem: 0,
       items: [
@@ -400,7 +446,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({
+    ...mapState({
       //user: "auth/user",
       //isAuthenticated: "auth/isAuthenticated",
       //userName: "auth/userName",
@@ -426,13 +472,13 @@ export default {
       return this.$vuetify.theme.dark ? "dark" : "light";
     },
     isKeysSet: {
-      get(){
-        return this.$store.state.auth.isKeysSet
+      get() {
+        return this.$store.state.auth.isKeysSet;
       },
-      set(value){
-        this.$store.commit("auth/SET_IS_KEYS_SET",value)
-      }
-    }
+      set(value) {
+        this.$store.commit("auth/SET_IS_KEYS_SET", value);
+      },
+    },
   },
   methods: {
     switchDarkMode() {
@@ -489,6 +535,7 @@ export default {
       }
     },
     async connectToMetaMask() {
+      this.startLoading();
       try {
         if (
           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -560,19 +607,28 @@ export default {
 
             //Check it the user already set its keys
             const ownerPublicKey = await this.contract.publicKeys(this.address);
-            if (ownerPublicKey != '') {
-              this.isKeysSet = true
+            if (ownerPublicKey != "") {
+              this.isKeysSet = true;
             } else {
-              this.isKeysSet = false
-              this.$router.push("/profile")
-
+              this.isKeysSet = false;
+              this.$router.push("/profile");
             }
 
             //Get decryptedPrivateKey if not found in local storage
-            if (localStorage.getItem("decryptedPrivateKey") == null && this.isKeysSet) {
-              this.decryptWithMetamaskDialog = true;
+            if (
+              localStorage.getItem("decryptedPrivateKey") == null &&
+              this.isKeysSet
+            ) {
+              this.openNotificationDialog({
+                title: "Decrypt request",
+                text: `Messages are decrypted with help of the MetaMask client. 
+                       You have to request your MetaMask client to provide your
+                       unique key by which your messages can be decrypted. \n\n Your
+                       unique key is stored in the browser cache until you 
+                       disconnect with your MetaMask wallet.`,
+              });
               const privateKey = await this.decryptPrivateKey();
-              this.decryptWithMetamaskDialog = false;
+              this.closeNotificationDialog();
               console.log("XXXXXXXXX Decrypted private key: ", privateKey);
               this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
             }
@@ -585,18 +641,16 @@ export default {
           }
         }
       } catch (error) {
-        this.metaMaskErrorDialog = true;
         if (error.code == -32002) {
-          this.metaMaskErrorText =
-            "Connection to the MetaMask wallet has been already requested. Check your MetaMask, you may need to unlock it.";
-        } else if (error.code == 4001) {
-          this.metaMaskErrorText = error.message;
-          this.disconnectMetaMask();
+          this.openNotificationSnackbar(
+            "Connection to the MetaMask wallet has been already requested. Check your MetaMask, you may need to unlock it."
+          );
         } else {
-          this.metaMaskErrorText = error.message;
+          this.openNotificationSnackbar(error.message);
+          this.disconnectMetaMask();
         }
-        console.log(error);
       }
+      this.endLoading();
     },
     disconnectMetaMask() {
       this.$store.dispatch("auth/clearMetaMaskUser");
@@ -623,8 +677,7 @@ export default {
       !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
       ) &&
-      localStorage.getItem("isMetaMaskAuthenticated")
-      &&
+      localStorage.getItem("isMetaMaskAuthenticated") &&
       localStorage.getItem("decryptedPrivateKey") != null
     ) {
       this.connectToMetaMask();

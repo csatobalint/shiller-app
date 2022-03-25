@@ -53,6 +53,9 @@ const router = new VueRouter({
 
 
  router.beforeEach((to, from, next) => {
+  if(to.path !== '/' && to.path !== '/profile')
+    store.dispatch('system/startLoading');
+
   // redirect to login page if user is not logged in and trying to access a restricted page
   //const publicPages = ['/login', '/register']
   const publicPages = ['/']

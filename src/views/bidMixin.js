@@ -90,7 +90,7 @@ export default {
 
       // create a copy of the bidData (readonly)
       let decryptedData = data.slice(0,8).concat([[...data[8]]])
-      console.log(decryptedData);
+      //console.log(decryptedData);
       //console.log(response);
 
       //i am the owner, decrypt question and answer crypted with owener public key with owner private key
@@ -110,7 +110,7 @@ export default {
 
       const data = await this.contract.getBidsContract(this.options);
       // const response = await this.provider.call(data);
-      console.log(data);
+      //console.log(data);
       // console.log(response);
       return data;
     },
@@ -118,13 +118,15 @@ export default {
 
       const data = await this.contract.getBidsBeneficiary(this.options);
       // const response = await this.provider.call(data);
-      console.log(data);
+      //console.log(data);
       // console.log(response);
       return data;
     },
     async makeNew() {
+      this.startLoading();
 
-      // get beneficiaryAddress public key which will be used for encryption
+      try {
+        // get beneficiaryAddress public key which will be used for encryption
       const identityPublicKeyBeneficiary = await this.contract.publicKeys(this.question.toAddress);
       console.log(identityPublicKeyBeneficiary)
 
@@ -180,6 +182,10 @@ export default {
           encryptedKeys.encryptedPrivateKey, // fromAddress encrypted private key
           0 // bidlimit TODO
         );
+
+        //save locally the decrypted private key
+        const privateKey = await this.decryptPrivateKey();
+        this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
       }
       else{
         console.log('isOwnerKeysAlreadySet: ',isOwnerKeysAlreadySet)
@@ -198,26 +204,48 @@ export default {
       }
 
       let fee = 1; // 1%
-      let bidAmount = Number(this.question.bid)*100/(100-fee);
-      data.value = ethers.utils.parseEther(bidAmount.toFixed(16).toString());
+      //let bidAmount = Number(this.question.bid)*100/(100-fee);
+      let bidAmountWei = Math.ceil(this.question.bid*1e18);
+      let feeAmountWei = Math.ceil(bidAmountWei*fee/100);
+      let transactionAmount = (bidAmountWei + feeAmountWei)/1e18;
+      data.value = ethers.utils.parseEther(transactionAmount.toString());
       console.log(data);
   
       await this.waitForMetaMaskTransaction(data);
       await this.updateMyBids();
+
       this.dialog = false
+
+      this.openNotificationSnackbar("You question has been sent successfully.")
+
+      } catch (error) {
+        this.openNotificationSnackbar(error.message)
+        this.endLoading()
+      }
+      
 
     },
     async withdrawExpiredBid(questionId) {
-        const data = await this.contract.populateTransaction.withdrawExpiredBid(
-          questionId
-        );
-        // data.value = 0;
-        // console.log(data);
+        this.startLoading();
+        try {
+          const data = await this.contract.populateTransaction.withdrawExpiredBid(
+            questionId
+          );
+          await this.waitForMetaMaskTransaction(data);
+          await this.updateMyBids();
+          
+        } catch (error) {
+          this.openNotificationSnackbar(error.message)
+          this.endLoading()
+        }
   
-        await this.waitForMetaMaskTransaction(data);
-        await this.updateMyBids();
+        this.openNotificationSnackbar("The question has been withdrawn successfully.")
     },
     async rewardSolvedBid(questionId,answer,ownerAddress) {
+      
+      this.startLoading();
+
+      try {
         console.log(questionId,answer,ownerAddress)
 
         // ownerAddress public key to use for encryption
@@ -252,6 +280,14 @@ export default {
   
         await this.waitForMetaMaskTransaction(data);
         await this.updateBidsToMe();
+        this.openNotificationSnackbar("The question has been answered successfully.")
+
+      } catch (error) {
+        this.openNotificationSnackbar(error.message)
+        this.endLoading()
+      }
+
+        
     },
     async generateEncryptedKeys(){
       const metamaskPublicKey = await ethereum.request({ 
@@ -299,35 +335,53 @@ export default {
           const plainText = await EthCrypto.decryptWithPrivateKey(this.decryptedPrivateKey, parsedEncryptedText);
           return plainText
         } catch (error) {
-          console.log(error)
-          return "This text cannot be decrypted with your account."
+          throw new Error('This text cannot be decrypted.');
         }
         
       }
     },
     async updateMyBids() {
+        this.startLoading();
         const ids = await this.getBidsContract();
         const bids = [];
-        ids.forEach((id) => {
-          this.getBid(id).then((res) => {
-            const array = [...res];
+        let errors = [];
+
+        for(const id of ids){
+          try {
+            const bid = await this.getBid(id)
+            const array = [...bid];
             array.push(id);
             bids.push(array);
-          });
-        });
-        this.$store.dispatch("bids/updateMyBids", bids);
+          } catch (error) {
+            errors.push(error)
+          }
+        }
+        
+        console.log(errors)
+        await this.$store.dispatch("bids/updateMyBids", bids);
+        this.endLoading();
     },
     async updateBidsToMe() {
+        this.startLoading();
         const ids = await this.getBidsBeneficiary();
         const bids = [];
-        ids.forEach((id) => {
-          this.getBid(id).then((res) => {
-            const array = [...res];
+        let errors = [];
+
+        for(const id of ids){
+          try {
+            const bid = await this.getBid(id)
+            const array = [...bid];
             array.push(id);
             bids.push(array);
-          });
-        });
-        this.$store.dispatch("bids/updateBidsToMe", bids);
+          } catch (error) {
+            errors.push(error)
+          }
+        }
+        
+        console.log(errors)
+        await this.$store.dispatch("bids/updateBidsToMe", bids);
+        this.endLoading();
+
     },
     shortAddress(address){
         return address.slice(0, 5) + "..." + address.slice(-4);

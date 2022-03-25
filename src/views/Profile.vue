@@ -56,7 +56,7 @@
                 <v-col cols="12" class="text-left">
                   Update your bid limit of questions sent to you
                 </v-col>
-                <v-col>
+                <v-col cols="3">
                   <v-text-field
                     name="bid_limit"
                     label="Bid limit"
@@ -64,15 +64,16 @@
                     v-model="bidLimit"
                     dense
                     outlined
+                    suffix="ETH"
                   ></v-text-field>
                 </v-col>
-                <v-col>
+                <v-col class="text-right">
                   <v-btn
                     color="primary darken-1"
                     outlined
                     @click="updateBidLimit()"
                   >
-                    Update bid limit
+                    Update
                   </v-btn>
                 </v-col>
               </v-row>
@@ -104,15 +105,6 @@ export default {
     ...mapState({
       isKeysSet: (state) => state.auth.isKeysSet,
     }),
-    // bidLimit: {
-    //   get(){
-    //     return this.abidLimit
-    //   },
-    //   async set(value){
-    //     console.log(value)
-    //     await this.setBidLimit(value)
-    //   }
-    // }
   },
   asyncComputed: {
     bidLimit: {

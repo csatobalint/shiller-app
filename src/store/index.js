@@ -8,12 +8,12 @@ Vue.use(Vuex)
 
 import auth from "./auth.js";
 import bids from "./bids.js";
+import system from "./system.js";
 
 export default new Vuex.Store({
   state: {
     questions: [],
     users: [],
-    myBids: [],
   },
   getters: {
     getUserMetamaskDictionary: state => {
@@ -35,10 +35,12 @@ export default new Vuex.Store({
       });
       return data
     },
-    getQuestions: state => state.questions
+    getQuestions: state => state.questions,
+
   },
   mutations: {
     ...vuexfireMutations,
+   
   },
   actions: {
     bindQuestions: firestoreAction(({ bindFirestoreRef }) => {
@@ -86,6 +88,7 @@ export default new Vuex.Store({
   },
   modules: {
     auth,
-    bids
+    bids,
+    system
   }
 })

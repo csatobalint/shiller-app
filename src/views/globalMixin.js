@@ -1,4 +1,4 @@
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 import { ethers } from "ethers";
 const { ethereum } = window;
 const EthCrypto = require('eth-crypto');
@@ -19,11 +19,32 @@ export default {
       signer: "auth/metaMaskSigner",
       address: "auth/metaMaskAddress",
       contract: "auth/metaMaskContract",
-      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated"
+      isMetaMaskAuthenticated: "auth/isMetaMaskAuthenticated",
+      isLoading: "system/isLoading",
+      isNotificationDialog: "system/isNotificationDialog",
+      isNotificationDialogTitle: "system/isNotificationDialogTitle",
+      isNotificationDialogText: "system/isNotificationDialogText",
+      isNotificationSnackbar: "system/isNotificationSnackbar",
+      isNotificationSnackbarText: "system/isNotificationSnackbarText",
     }),
-    
+    // isNotificationSnackbar:{
+    //   get(){
+    //     return state => state.system.isNotificationSnackbar
+    //   },
+    //   set(){
+    //     this.$store.dispatch('system/closeNotificationSnackbar');
+    //   }
+    // }
   },
   methods: {
+    ...mapActions({
+      startLoading: 'system/startLoading',
+      endLoading: 'system/endLoading',
+      openNotificationDialog: 'system/openNotificationDialog',
+      closeNotificationDialog: 'system/closeNotificationDialog',
+      openNotificationSnackbar: 'system/openNotificationSnackbar',
+      closeNotificationSnackbar: 'system/closeNotificationSnackbar'
+    }),
     sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     },
@@ -58,13 +79,15 @@ export default {
       const data = await this.contract.populateTransaction.setBidLimit(
         ethers.utils.parseEther(bidLimit.toString())
       );
-      console.log("Data: ", data)
+      // console.log("Data: ", data)
 
-      const response = await this.signer.populateTransaction(data);
-      console.log("Response: ", response)
+      // const response = await this.signer.populateTransaction(data);
+      // console.log("Response: ", response)
 
-      const tx = this.signer.sendTransaction(response);
-      console.log("Tx: ", tx);
+      // const tx = this.signer.sendTransaction(response);
+      // console.log("Tx: ", tx);
+      await this.waitForMetaMaskTransaction(data);
+      alert('done');
     },
     async setKeysWithBidLimit(bidLimit){
       const metamaskPublicKey = await ethereum.request({ 

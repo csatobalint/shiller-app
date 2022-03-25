@@ -5,7 +5,6 @@
       <v-col cols="8">
         <v-row class="py-5 align-center">
           <v-col class="text-h4">My questions</v-col>
-          <v-btn @click="setKeysWithBidLimit">Set Keys</v-btn>
           <v-col class="text-right">
             <v-btn
               class="mr-2"
@@ -94,7 +93,12 @@
           </v-col>
         </v-row>
         <Tab
-          :tab-items="[{ tab: 'Answered' }, { tab: 'Pending' }, { tab: 'Expired' }, { tab: 'All' }]"
+          :tab-items="[
+            { tab: 'Answered' },
+            { tab: 'Pending' },
+            { tab: 'Expired' },
+            { tab: 'All' },
+          ]"
         ></Tab>
         <template v-for="(item, index) in sortedBids">
           <template>
@@ -105,7 +109,30 @@
                 width="100%"
               >
                 <v-card-subtitle class="pl-5 d-flex justify-space-between">
-                  <span>Question</span>
+                  <div>
+                    <span class="pr-2">Question</span>
+                    <v-tooltip right>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-chip
+                          small
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="copyAddress('question' + item[BID.questionId])"
+                          >To:
+                          {{ shortAddress(item[BID.beneficiaryAddress]) }}</v-chip
+                        >
+                      </template>
+                      <v-icon>mdi-content-copy</v-icon>
+                      <span>{{ item[BID.beneficiaryAddress] }} </span>
+                    </v-tooltip>
+                    <input
+                    v-on:focus="$event.target.select()"
+                    :ref="'question' + item[BID.questionId]"
+                    readonly
+                    type="hidden"
+                    :value="item[BID.beneficiaryAddress]"
+                  />
+                  </div>
                   <span>{{ item[BID.timestamp] | hexToDate }}</span>
                 </v-card-subtitle>
                 <v-card-text>
@@ -139,58 +166,78 @@
                 <v-divider class="mx-4"></v-divider>
                 <v-card-title class="text-body-1">
                   <v-row>
-                    <v-col>
-                      <v-tooltip right>
-                        <template v-slot:activator="{ on, attrs }">
-                          <v-chip v-bind="attrs" v-on="on" @click="copyAddress('question' + item[BID.questionId])"
-                            >To:
-                            {{
-                              shortAddress(item[BID.beneficiaryAddress])
-                            }}</v-chip
-                          >
-                        </template>
-                        <v-icon>mdi-content-copy</v-icon> <span>{{ item[BID.beneficiaryAddress] }} </span>
-                      </v-tooltip>
-                      <input
-                        v-on:focus="$event.target.select()"
-                        :ref="'question' + item[BID.questionId]"
-                        readonly
-                        type="hidden"
-                        :value="item[BID.beneficiaryAddress]"
-                      />
-                    </v-col>
-                    <v-col class="text-right"
+                    <v-col class="text-left"
                       >{{ parseInt(item[BID.value]) / 1e18 }} ETH
+                    </v-col>
+                    <v-col
+                      cols=""
+                      v-if="
+                        !item[BID.answered] &&
+                        !item[BID.withdrawn] &&
+                        item[BID.deadline] != 0
+                      "
+                      class="text-body-2 text-right"
+                    >
+                      <span
+                        v-if="
+                          countdown(item[BID.timestamp], item[BID.deadline]) > 0
+                        "
+                      >
+                        Expires in
+                        {{
+                          formatCountdownTime(
+                            countdown(item[BID.timestamp], item[BID.deadline])
+                          )
+                        }}
+                        at
+                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                      </span>
+                      <span v-else>
+                        Expired at
+                        {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                      </span>
+                    </v-col>
+                    <v-col v-if="
+                          !item[BID.answered] &&
+                          !item[BID.withdrawn] &&
+                          item[BID.deadline] == 0
+                        " class="text-right">
+                      <v-btn
+                        
+                        :disabled="
+                          isTimeLimitExpired(
+                            item[BID.timestamp],
+                            item[BID.deadline]
+                          )
+                        "
+                        color="seondary"
+                        outlined
+                        small
+                        @click="withdrawExpiredBid(item[BID.questionId])"
+                        >Withdraw</v-btn
+                      >
                     </v-col>
                   </v-row>
                 </v-card-title>
 
                 <v-card-actions class="pl-5">
                   <v-row>
-                    <v-col cols="" v-if="!item[BID.answered] && !item[BID.withdrawn] && item[BID.deadline] !=0 " class="text-body-2">
-                      <span v-if="countdown(item[BID.timestamp],item[BID.deadline]) > 0">
-                        Expires in {{formatCountdownTime(countdown(item[BID.timestamp],item[BID.deadline]))}} at {{ dueStamp(item[BID.timestamp],item[BID.deadline]) }}
-                      </span>
-                      <span v-else>
-                        Expired at {{ dueStamp(item[BID.timestamp],item[BID.deadline]) }}
-                      </span>
-                    </v-col>
-                    <v-col cols="" class="text-right">
-                      <v-btn
-                        v-if="!item[BID.answered] && !item[BID.withdrawn] && item[BID.deadline] == 0"
-                        :disabled="isTimeLimitExpired(item[BID.timestamp],item[BID.deadline])"
-                        color="seondary"
-                        outlined
-                        @click="withdrawExpiredBid(item[9])"
-                        >Withdraw</v-btn
-                      >
-                    </v-col>
+                    
                   </v-row>
                 </v-card-actions>
               </v-card>
             </v-row>
           </template>
         </template>
+        <div v-if="sortedBids.length == 0">
+              <v-card
+                class="rounded-xl mt-5 pa-2 darken-1"
+                outlined
+                width="100%"
+              >
+                <v-card-subtitle>No questions have been found.</v-card-subtitle>
+              </v-card>
+        </div>
       </v-col>
       <v-col></v-col>
     </v-row>
@@ -225,8 +272,8 @@ export default {
   },
   methods: {},
   mounted() {
-    if (this.isMetaMaskAuthenticated){
-      this.$store.commit('bids/SET_TAB_FILTER','Answered')
+    if (this.isMetaMaskAuthenticated) {
+      this.$store.commit("bids/SET_TAB_FILTER", "Answered");
       this.updateMyBids();
     }
   },

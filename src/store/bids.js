@@ -104,21 +104,21 @@ const bids = {
       }
     },
     actions: {
-        updateMyBids({commit},data){
+        async updateMyBids({commit},data){
             //commit('SET_TAB_FILTER','Answered');
             commit('SET_MY_BIDS',data);
         },
-        updateBidsToMe({commit},data){
+        async updateBidsToMe({commit},data){
             //commit('SET_TAB_FILTER','Pending');
             commit('SET_BIDS_TO_ME',data);
         },
-        updateTabFilter({commit},data){
+        async updateTabFilter({commit},data){
             commit('SET_TAB_FILTER',data);
         },
-        updateSortBy({commit},data){
+        async updateSortBy({commit},data){
             commit('SET_SORT_BY',data);
         },
-        updateSortDirection({commit},data){
+        async updateSortDirection({commit},data){
             commit('SET_SORT_DIRECTION',data);
         }
     }
