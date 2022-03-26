@@ -9,6 +9,14 @@
         <v-row class="pb-5">
           <v-sheet class="pa-5" width="100%" rounded="xl" color="foreground1">
             <v-container>
+              <v-row metamask>
+                <v-col cols="12" class="text-left">
+                  Connected with MetaMask
+                </v-col>
+                <v-col>
+                  {{this.address}}
+                </v-col>
+              </v-row>
               <v-row v-if="isKeysSet == false">
                 <v-col cols="12" class="text-left">
                   You have not used this application before. Are you here for
@@ -56,7 +64,7 @@
                 <v-col cols="12" class="text-left">
                   Update your bid limit of questions sent to you
                 </v-col>
-                <v-col cols="3">
+                <v-col cols="2">
                   <v-text-field
                     name="bid_limit"
                     label="Bid limit"
@@ -67,13 +75,39 @@
                     suffix="ETH"
                   ></v-text-field>
                 </v-col>
-                <v-col class="text-right">
+                <v-col>
                   <v-btn
                     color="primary darken-1"
                     outlined
                     @click="updateBidLimit()"
                   >
                     Update
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <v-row twitter>
+                <v-col cols="12" class="text-left">
+                  Connect with your Twitter account
+                </v-col>
+                <v-col>
+                  <v-btn
+                    color="primary darken-1"
+                    outlined
+                  >
+                    Attach Twitter
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <v-row email>
+                <v-col cols="12" class="text-left">
+                  Sign in or register with your emailt
+                </v-col>
+                <v-col>
+                  <v-btn
+                    color="primary darken-1"
+                    outlined
+                  >
+                    Register
                   </v-btn>
                 </v-col>
               </v-row>

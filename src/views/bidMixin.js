@@ -132,7 +132,7 @@ export default {
 
       // if beneficiaryAddress public key is not generated already his keys
       if(identityPublicKeyBeneficiary == ''){
-        throw new Error('Beneficiary is not already registered.')
+        throw new Error('Beneficiary has not already registered with the provided address.')
       }
 
       const beneficiaryBidLimit = await this.contract.bidLimits(this.question.toAddress);
@@ -141,7 +141,7 @@ export default {
       console.log(Number(this.question.bid))
       console.log(Number(beneficiaryBidLimit)/1e18 >= Number(this.question.bid))
       if(Number(beneficiaryBidLimit)/1e18 > Number(this.question.bid)){
-        throw new Error('Too small bid.')
+        throw new Error(`Benificiary minimum bid limit is ${Number(beneficiaryBidLimit)/1e18} ETH.`)
       }
       
       // encrypt the question text with the beneficiary public key
@@ -177,7 +177,7 @@ export default {
           this.question.toAddress, // toAddress
           encryptedQuestionOwner, //question text
           encryptedQuestionBeneficiary,
-          Math.abs(this.question.timeLimit), // time limit [s]  ----> if not =0, then it works
+          Math.abs(this.question.timeLimit.value), // time limit [s]  ----> if not =0, then it works
           encryptedKeys.identity.publicKey, // fromAddress encrypted public key
           encryptedKeys.encryptedPrivateKey, // fromAddress encrypted private key
           0 // bidlimit TODO
@@ -199,7 +199,7 @@ export default {
           this.question.toAddress, // toAddress
           encryptedQuestionOwner, //question encrypted by to user public key
           encryptedQuestionBeneficiary, //question encrypted by to user public key
-          Math.abs(this.question.timeLimit) //Math.abs(this.question.timeLimit) // time limit [s]
+          Math.abs(this.question.timeLimit.value) //Math.abs(this.question.timeLimit) // time limit [s]
         );
       }
 
@@ -219,7 +219,8 @@ export default {
       this.openNotificationSnackbar("You question has been sent successfully.")
 
       } catch (error) {
-        this.openNotificationSnackbar(error.message)
+        console.log(error)
+        this.openNotificationSnackbar("MetaMask: " + error.message)
         this.endLoading()
       }
       

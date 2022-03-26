@@ -20,22 +20,15 @@
         </v-col>
         <v-col cols="4">
           <div class="d-flex justify-center">
-            <v-btn
-              :to="{ name: 'mybids' }"
-              text
-              large
-              class="mx-1"
-              :disabled="!isMetaMaskAuthenticated"
+            <v-btn :to="{ name: 'mybids' }" text large class="mx-1"
               >Ask something</v-btn
             >
-            <v-btn
-              :to="{ name: 'bidstome' }"
-              text
-              large
-              class="mx-1"
-              :disabled="!isMetaMaskAuthenticated || !isKeysSet"
+            <!-- :disabled="!isMetaMaskAuthenticated" -->
+
+            <v-btn :to="{ name: 'bidstome' }" text large class="mx-1"
               >Answer questions</v-btn
             >
+            <!-- :disabled="!isMetaMaskAuthenticated || !isKeysSet" -->
           </div>
         </v-col>
         <v-col cols="4">
@@ -407,7 +400,7 @@
       <!-- Provides the application the proper gutter -->
       <v-container fluid>
         <!-- If using vue-router -->
-        <router-view></router-view>
+        <Transition name="fade" mode="out-in"> <router-view></router-view> </Transition>
       </v-container>
     </v-main>
     <v-footer color="gradientAppBarColor" padless>
@@ -485,7 +478,7 @@ export default {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark;
     },
     goToHome() {
-      this.$router.go("/");
+      this.$router.push("/");
     },
     getEthersScanAddressPage() {
       let chainName = {
@@ -717,5 +710,15 @@ html {
     var(--v-answerQuestionBackgroundColor-base) 50%,
     var(--v-answerQuestionBackgroundColor-base) 100%
   );
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

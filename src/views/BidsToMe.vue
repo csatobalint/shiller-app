@@ -252,6 +252,8 @@ export default {
     if (this.isMetaMaskAuthenticated) {
       this.$store.commit("bids/SET_TAB_FILTER", "Pending");
       this.updateBidsToMe();
+    }else{
+      this.endLoading()
     }
   },
 };

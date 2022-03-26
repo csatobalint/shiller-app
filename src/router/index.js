@@ -58,17 +58,17 @@ const router = new VueRouter({
 
   // redirect to login page if user is not logged in and trying to access a restricted page
   //const publicPages = ['/login', '/register']
-  const publicPages = ['/']
-  const authRequired = !publicPages.includes(to.path)
+  //const publicPages = ['/']
+  //const authRequired = !publicPages.includes(to.path)
 
   //const loggedIn = !!firebase.auth()
   //const loggedIn = localStorage.getItem('isAuthenticated')
-  const loggedIn = store.state.auth.isMetaMaskAuthenticated
+  //const loggedIn = store.state.auth.isMetaMaskAuthenticated
 
-  if (authRequired && !loggedIn) {
-    return next('/')
-    //return next('/login')
-  }
+  // if (authRequired && !loggedIn) {
+  //   return next('/')
+  //   //return next('/login')
+  // }
 
   next()
 
