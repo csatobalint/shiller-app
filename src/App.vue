@@ -9,12 +9,12 @@
             @click="goToHome()"
           >
             <img
-              :src="require('./assets/logo-' + this.colorMode + '.png')"
+              :src="require('./assets/cask-' + this.colorMode + '.png')"
               class="mr-3"
               height="40"
             />
             <v-toolbar-title>
-              <span class="text-h4">Shiller</span>
+              <span class="text-h4">cASK</span>
             </v-toolbar-title>
           </div>
         </v-col>

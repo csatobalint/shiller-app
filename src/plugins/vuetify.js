@@ -25,20 +25,20 @@ export default new Vuetify({
         options: { customProperties: true },
         themes: {
             light: {
-              appbarColor: colors.deepPurple.lighten5,
+              appbarColor: colors.indigo.lighten5,
               background: colors.indigo.lighten5,
               foreground1: colors.white,
               foreground2: colors.white,
-              primary: colors.deepPurple,
+              primary: colors.deepPurple.lighten1,
               secondary: colors.purple,
               accent: colors.shades.black,
               success: colors.red.accent3,
               error: colors.red.accent3,
               info: colors.red.accent3,
-              backgroundColor1: colors.deepPurple.lighten5,
-              backgroundColor2: colors.deepPurple.lighten5,
-              backgroundColor3: colors.indigo.lighten5,
-              appbarColor1: colors.deepPurple.lighten5,
+              backgroundColor1: colors.grey.lighten5,
+              backgroundColor2: colors.grey.lighten5,
+              backgroundColor3: colors.grey.lighten5,
+              appbarColor1: colors.shades.white,
               answerQuestionBackground: colors.teal.lighten5
             },
             dark: {

@@ -6,7 +6,7 @@
         <v-row class="py-5 align-center">
           <v-col class="text-h4">Questions sent to me</v-col>
           <v-col class="text-right">
-            <v-btn
+            <!-- <v-btn
               class="mr-2"
               fab
               outlined
@@ -14,7 +14,7 @@
               @click="updateBidsToMe()"
             >
               <v-icon dark> mdi-refresh </v-icon>
-            </v-btn>
+            </v-btn> -->
           </v-col>
         </v-row>
         <Tab
