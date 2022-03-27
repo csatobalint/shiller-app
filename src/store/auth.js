@@ -109,7 +109,7 @@ const auth = {
               email: user.providerData[0].email,
               displayName: user.providerData[0].displayName,
             }
-            if(state.metaMask.address)
+            if(state.metaMask !==null)
               userProfile.metamask = state.metaMask.address
             if(state.userName)
               userProfile.userName = state.userName
