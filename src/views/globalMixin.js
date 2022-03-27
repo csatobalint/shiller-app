@@ -4,17 +4,34 @@ const { ethereum } = window;
 const EthCrypto = require('eth-crypto');
 const ethUtil = require('ethereumjs-util');
 const sigUtil = require('@metamask/eth-sig-util');
+import firebase from "firebase";
 
 export default {
   filters: {
   },
   data() {
     return {
-      now: 0
+      now: 0,
+      rules: {
+        required: (value) => !!value || "Required",
+        positiveNumber: (value) => value > 0 || "Must be greater than 0",
+        isValidHex: (value) =>
+          (value.length == 42 && !isNaN(parseInt(value, 16))) ||
+          "This is not a valid address",
+        counter: (value) => value.length <= 20 || "Max 20 characters",
+        email: (value) => {
+          const pattern =
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          return pattern.test(value) || "Invalid e-mail.";
+        },
+      },
     }
   },
   computed: {
     ...mapGetters({
+      user: "auth/user",
+      isAuthenticated: "auth/isAuthenticated",
+      userName: "auth/userName",
       provider: "auth/metaMaskProvider",
       signer: "auth/metaMaskSigner",
       address: "auth/metaMaskAddress",
@@ -45,6 +62,45 @@ export default {
       openNotificationSnackbar: 'system/openNotificationSnackbar',
       closeNotificationSnackbar: 'system/closeNotificationSnackbar'
     }),
+    signInWithTwitter() {
+      var provider = new firebase.auth.TwitterAuthProvider();
+      firebase
+        .auth()
+        .signInWithPopup(provider)
+        .then((userCredential) => {
+          // Get the Twitter screen name.
+          this.$store.dispatch(
+            "auth/updateUserName",
+            userCredential.additionalUserInfo.username
+          );
+        })
+        .catch((error) => {
+          alert(error);
+          return;
+        });
+      firebase
+        .auth()
+        .getRedirectResult()
+        .then(() => {
+          //console.log(res.user.additionalUserInfo);
+          //this.$router.replace({ name: "app" });
+        })
+        .catch((error) => {
+          alert(error);
+          return;
+        });
+    },
+    signOut() {
+      firebase
+        .auth()
+        .signOut()
+        .then(() => {
+          this.$store.dispatch("auth/clearUser");
+          // this.$router.replace({
+          //   name: "login",
+          // });
+        });
+    },
     sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     },
@@ -67,6 +123,19 @@ export default {
     },
     getNow() {
       this.now = Date.now();
+    },
+    NumbersOnly(evt) {
+      evt = evt ? evt : window.event;
+      var charCode = evt.which ? evt.which : evt.keyCode;
+      if (
+        charCode > 31 &&
+        (charCode < 48 || charCode > 57) &&
+        charCode !== 46
+      ) {
+        evt.preventDefault();
+      } else {
+        return true;
+      }
     },
     async getBidLimit() {
       const data = await this.contract.bidLimits(this.address);

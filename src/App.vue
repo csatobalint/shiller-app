@@ -32,7 +32,7 @@
           </div>
         </v-col>
         <v-col cols="4">
-          <div class="d-flex justify-end">
+          <div class="d-flex justify-end align-center">
             <v-btn
               outlined
               @click="switchDarkMode"
@@ -208,75 +208,76 @@
                 </v-dialog>
               </div>
             </template>
+            <template v-if="isAuthenticated && isMetaMaskAuthenticated && user !== null">
+            <template>
+              <v-menu v-model="showMenu" absolute offset-y style="max-width: 600px">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-avatar class="ml-2" size=40 v-if="user.photoURL" v-bind="attrs" v-on="on">
+                    <img :src="user.photoURL" />
+                  </v-avatar>
+                  <v-avatar
+                    v-else
+                    color="primary"
+                    size="40"
+                    v-bind="attrs"
+                    v-on="on"
+                    ><v-icon dark> mdi-account-circle </v-icon>
+                  </v-avatar>
+                </template>
+                <v-list>
+                  <v-list-item>
+                    <v-list-item-avatar>
+                      <v-avatar v-if="user.photoURL">
+                        <img :src="user.photoURL" />
+                      </v-avatar>
+                      <v-avatar v-else color="primary" size="24"
+                        ><v-icon dark> mdi-account-circle </v-icon>
+                      </v-avatar>
+                    </v-list-item-avatar>
+                    <v-list-item-content>{{ userName }}</v-list-item-content>
+                  </v-list-item>
+
+                  <v-list-item link>
+                    <v-list-item-content>
+                      <v-list-item-title class="text-h6">
+                        {{ user.displayName }}
+                      </v-list-item-title>
+                      <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+                    </v-list-item-content>
+
+                    <v-list-item-action>
+                      <v-icon>mdi-menu-down</v-icon>
+                    </v-list-item-action>
+                  </v-list-item>
+                </v-list>
+                <v-divider></v-divider>
+                <v-list nav dense>
+                  <v-list-item-group v-model="selectedItem" color="primary">
+                    <v-list-item @click="$router.push('/profile')">
+                      <v-list-item-icon>
+                        <v-icon>mdi-cog-outline</v-icon>
+                      </v-list-item-icon>
+                      <v-list-item-content>
+                        <v-list-item-title>Settings</v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                    <v-list-item @click="signOut">
+                      <v-list-item-icon>
+                        <v-icon>mdi-logout</v-icon>
+                      </v-list-item-icon>
+                      <v-list-item-content>
+                        <v-list-item-title>Logout</v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list-item-group>
+                </v-list>
+              </v-menu>
+            </template>
+          </template>
           </div>
         </v-col>
       </v-row>
-      <!-- <template v-if="isAuthenticated && user !== null">
-        <template>
-          <v-menu v-model="showMenu" absolute offset-y style="max-width: 600px">
-            <template v-slot:activator="{ on, attrs }">
-              <v-avatar v-if="user.photoURL" v-bind="attrs" v-on="on">
-                <img :src="user.photoURL" />
-              </v-avatar>
-              <v-avatar
-                v-else
-                color="primary"
-                size="40"
-                v-bind="attrs"
-                v-on="on"
-                ><v-icon dark> mdi-account-circle </v-icon>
-              </v-avatar>
-            </template>
-            <v-list>
-              <v-list-item>
-                <v-list-item-avatar>
-                  <v-avatar v-if="user.photoURL">
-                    <img :src="user.photoURL" />
-                  </v-avatar>
-                  <v-avatar v-else color="primary" size="40"
-                    ><v-icon dark> mdi-account-circle </v-icon>
-                  </v-avatar>
-                </v-list-item-avatar>
-                <v-list-item-content>{{ userName }}</v-list-item-content>
-              </v-list-item>
-
-              <v-list-item link>
-                <v-list-item-content>
-                  <v-list-item-title class="text-h6">
-                     {{ user.displayName }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
-                </v-list-item-content>
-
-                <v-list-item-action>
-                  <v-icon>mdi-menu-down</v-icon>
-                </v-list-item-action>
-              </v-list-item>
-            </v-list>
-            <v-divider></v-divider>
-            <v-list nav dense>
-              <v-list-item-group v-model="selectedItem" color="primary">
-                <v-list-item>
-                  <v-list-item-icon>
-                    <v-icon>mdi-cog-outline</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Settings</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-list-item @click="signOut">
-                  <v-list-item-icon>
-                    <v-icon>mdi-logout</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Logout</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
-            </v-list>
-          </v-menu>
-        </template>
-      </template> -->
+      
     </v-app-bar>
 
     <v-main class="gradientBackgroundColor">
@@ -415,8 +416,6 @@
 
 <script>
 import "vue-router";
-import { mapState } from "vuex";
-import firebase from "firebase";
 import MetaMaskOnboarding from "@metamask/onboarding";
 const { ethereum } = window;
 import { ethers } from "ethers";
@@ -439,11 +438,6 @@ export default {
     };
   },
   computed: {
-    ...mapState({
-      //user: "auth/user",
-      //isAuthenticated: "auth/isAuthenticated",
-      //userName: "auth/userName",
-    }),
     isMetaMaskInstalled() {
       return Boolean(ethereum && ethereum.isMetaMask);
     },
@@ -490,18 +484,6 @@ export default {
       }etherscan.io/address/${this.address}`;
     },
 
-    // NOT USED
-    signOut() {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          this.$store.dispatch("auth/clearUser");
-          this.$router.replace({
-            name: "login",
-          });
-        });
-    },
     // NOT USED
     onClickInstall() {
       this.connectWalletButtonText = "Onboarding in progress";

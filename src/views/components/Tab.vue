@@ -7,22 +7,20 @@
         </v-tab>
       </v-tabs>
     </v-col>
-    <v-col cols="2" class="d-flex justify-end">
+    <v-col cols="2" class="d-flex justify-end align-center">
       <v-spacer></v-spacer>
       <v-select
         v-model="sortBy"
         :items="['Date', 'Bid']"
         menu-props="auto"
         label="Select"
-        hide-details
         single-line
       >
       </v-select>
       <v-tooltip top>
         <template v-slot:activator="{ on, attrs }">
-          <v-btn class="ma-2 align-end" text icon color="">
+          <v-btn text icon color="">
             <v-icon
-              class=""
               @click="changeShortIcon"
               text
               v-bind="attrs"

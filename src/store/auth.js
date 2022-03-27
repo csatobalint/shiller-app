@@ -6,18 +6,16 @@ const auth = {
 
     state: {
         isAuthenticated: false,
-        isMetaMaskAuthenticated: false,
         user: {
           
         },
-        //metamask: null,
         userName: localStorage.getItem('userName'),
+        isMetaMaskAuthenticated: false,
         metaMask: null,
         isKeysSet: false,
         decryptedPrivateKey: localStorage.getItem('decryptedPrivateKey'),
 
     },
-
     getters: {
       user(state){
         return state.user
@@ -29,16 +27,16 @@ const auth = {
           return state.isAuthenticated
       },
       metaMaskProvider(state){
-        return state.metaMask.provider
+        return (state.metaMask) ? state.metaMask.provider : null
       },
       metaMaskSigner(state){
-        return state.metaMask.provider.getSigner()
+        return (state.metaMask) ? state.metaMask.provider.getSigner() : null
       },
       metaMaskAddress(state){
-        return state.metaMask.address
+        return (state.metaMask) ? state.metaMask.address : null
       },
       metaMaskContract(state){
-        return state.metaMask.contract
+        return (state.metaMask) ? state.metaMask.contract : null
       },
       isMetaMaskAuthenticated(state){
         return state.isMetaMaskAuthenticated
@@ -50,7 +48,7 @@ const auth = {
       },
       SET_USER(state, data) {
         state.user = data;
-        localStorage.setItem('isAuthenticated', true)
+        //localStorage.setItem('isAuthenticated', true)
       },
       DELETE_USER(state){
         state.user = null;
@@ -58,9 +56,6 @@ const auth = {
         localStorage.removeItem('isAuthenticated')
         localStorage.removeItem('userName')
       },
-      // SET_METAMASK(state,data){
-      //   state.metamask = data
-      // },
       SET_USERNAME(state,data){
         state.userName = data
         localStorage.setItem('userName', data)
@@ -106,18 +101,20 @@ const auth = {
     actions: {
       async fetchUser({ commit, state }, user) {
         commit("SET_LOGGED_IN", user !== null);
+
+        //store UserProfile in users table in firbase
         if(user.providerData[0] !== null){
+            
             let userProfile = {
               email: user.providerData[0].email,
               displayName: user.providerData[0].displayName,
             }
-
-            if(state.metamask)
-              userProfile.metamask = state.metamask
-            
+            if(state.metaMask.address)
+              userProfile.metamask = state.metaMask.address
             if(state.userName)
               userProfile.userName = state.userName
 
+            //check is exists
             let isExists = await db.collection("users")
               .doc(user.email)
               .get()            
@@ -130,29 +127,11 @@ const auth = {
               await db.collection('users').doc(user.email).set(userProfile)
               commit("SET_USER", user.providerData[0]);
             }
-
         }else {
-            commit("SET_USER", null);
+            //commit("SET_USER", null);
         }
       },
-      clearUser({commit}){
-        commit("DELETE_USER");
-      },
-      // updateMetamask({commit, state}, metamask){
-      //   commit("SET_METAMASK",metamask);
-      //   if(state.user){
-      //     db
-      //     .collection('users')
-      //     .doc(state.user.email)
-      //     .update({metamask: state.metamask})
-      //     .then((data) => {
-      //       console.log(data)
-      //     }).
-      //     catch((error)=>{
-      //       console.log(`Error: ${error}`)
-      //     })
-      //   }
-      // },
+      
       updateUserName({commit, state}, userName){
         commit("SET_USERNAME",userName);
         if(state.user){
@@ -178,8 +157,12 @@ const auth = {
       updateMetaMaskContract({commit}, contract){
         commit('SET_METAMASK_CONTRACT',contract)
       },
+      clearUser({commit}){
+        commit("DELETE_USER");
+      },
       clearMetaMaskUser({commit}){
         commit('DELETE_METAMASK_AUTH')
+        //commit('DELETE_USER')
       }
     }
 };
