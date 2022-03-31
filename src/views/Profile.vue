@@ -6,6 +6,7 @@
         <v-row class="py-5">
           <h1>My profile</h1>
         </v-row>
+        <v-btn @click="setKeysWithBidLimit(0.01)">SET KEYS WITH BID LIMIT</v-btn>
         <v-row class="pb-5">
           <v-card class="pa-4 foreground1" width="100%" rounded="xl">
             <v-card-text metamask class="d-flex align-center">

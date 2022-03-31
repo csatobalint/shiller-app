@@ -310,6 +310,7 @@ export default {
       },
       timeLimitItems: [
         { name: "No Limit", value: 0 },
+        { name: "2 min", value: 120 },
         { name: "1 hour", value: 3600 },
         { name: "3 hours", value: 10800 },
         { name: "6 hours", value: 21600 },
@@ -339,6 +340,7 @@ export default {
     },
   },
   mounted() {
+    this.printMyBids();
     if (this.isMetaMaskAuthenticated) {
       this.$store.commit("bids/SET_TAB_FILTER", "Answered");
       this.updateMyBids();

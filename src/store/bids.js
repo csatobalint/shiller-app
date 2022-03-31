@@ -20,6 +20,8 @@ const bids = {
             answerForOwner: 2,
             answerForBenificiary: 3
         },
+        BlockTime: 8, //average Kovan network blocktime TODO
+        BlockNumber: 0,
         myBids: [],
         bidsToMe: [],
         sortBy: "Date",
@@ -40,7 +42,7 @@ const bids = {
                     !item[state.BID.answered]  // not answered
                     && !item[state.BID.withdrawn]  // not withdrawn
                     && item[state.BID.deadline] != 0 // not zero timelimit set
-                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])) < Date.now()/1000) //time > deadline
+                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) < Date.now()/1000) //time > deadline
                 )
             }
             else if (state.tabFilter == 'Pending'){
@@ -50,7 +52,7 @@ const bids = {
                     && (
                         item[state.BID.deadline] == 0 // zero timelimit set
                         || 
-                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])) >= Date.now()/1000) //time < deadline
+                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) >= Date.now()/1000) //time < deadline
                     ) 
                 )
             }
@@ -67,7 +69,7 @@ const bids = {
                     !item[state.BID.answered]  // not answered
                     && !item[state.BID.withdrawn]  // not withdrawn
                     && item[state.BID.deadline] != 0 // not zero timelimit set
-                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])) < Date.now()/1000) //time > deadline
+                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) < Date.now()/1000) //time > deadline
                 )
             }
             else if (state.tabFilter == 'Pending'){
@@ -77,7 +79,7 @@ const bids = {
                     && (
                         item[state.BID.deadline] == 0 // zero timelimit set
                         || 
-                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])) >= Date.now()/1000) //time < deadline
+                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) >= Date.now()/1000) //time < deadline
                     ) 
                 )
             }
@@ -101,6 +103,9 @@ const bids = {
       },
       SET_SORT_DIRECTION(state, data) {
         state.sortDirection = data;
+      },
+      SET_BLOCK_NUMBER(state, data) {
+        state.BlockNumber = data;
       }
     },
     actions: {

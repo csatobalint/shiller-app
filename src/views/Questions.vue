@@ -412,7 +412,7 @@ export default {
         //nonce: 0,
         from: from,
       };
-      const data = await contract.getBidsContract(options);
+      const data = await contract.getBidsOwner(options);
 
       console.log(data);
 

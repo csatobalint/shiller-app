@@ -426,7 +426,7 @@
     </v-main>
     <v-footer color="gradientAppBarColor" padless>
       <v-layout justify-center wrap>
-        <v-flex py-4 text-center white--text xs12>
+        <v-flex py-4 text-center xs12>
           {{ new Date().getFullYear() }} — <strong>Shiller Crypto</strong>
         </v-flex>
       </v-layout>
@@ -613,7 +613,8 @@ export default {
             if (
               localStorage.getItem("decryptedPrivateKey") == null &&
               this.isKeysSet
-            ) {
+            ) 
+            {
               this.openNotificationDialog({
                 title: "Decrypt request",
                 text: `Messages are decrypted with help of the MetaMask client. 
@@ -627,6 +628,12 @@ export default {
               console.log("XXXXXXXXX Decrypted private key: ", privateKey);
               this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
             }
+
+              // Get the current block number of the chain
+              const blockNumber = await this.provider.getBlockNumber();
+              console.log(blockNumber)
+              this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
+
           } else {
             this.connectWalletButtonDisabled = true;
             //On this object we have startOnboarding which will start the onboarding process for our end user
@@ -651,20 +658,7 @@ export default {
       this.$store.dispatch("auth/clearMetaMaskUser");
       this.connectWalletDialog = false
       this.$router.push("/");
-    },
-    async decryptPrivateKey() {
-      let options = {
-        from: this.address,
-      };
-      const encryptedPrivateKey = await this.contract.getPrivateKey(options);
-      console.log(encryptedPrivateKey);
-
-      return await ethereum.request({
-        method: "eth_decrypt",
-        params: [encryptedPrivateKey, this.address],
-      });
-      //console.log(this.decryptedPrivateKey);
-    },
+    }
   },
   created() {
     //if metamask is isntalled and desktop devices, and already logged in then try to connect on load
@@ -676,8 +670,11 @@ export default {
       localStorage.getItem("isMetaMaskAuthenticated") &&
       localStorage.getItem("decryptedPrivateKey") != null
     ) {
-      this.connectToMetaMask();
+      this.connectToMetaMask()
     }
+  },
+  mounted () {
+    
   },
 };
 </script>

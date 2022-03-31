@@ -45,7 +45,8 @@ export default {
         sortBy: state => state.bids.sortBy,
         sortDirection: state => state.bids.sortDirection,
         decryptedPrivateKey: state => state.auth.decryptedPrivateKey,
-        BID: state => state.bids.BID
+        BID: state => state.bids.BID,
+        BlockTime: state => state.bids.BlockTime,
     }),
     questionAnswerCardBackgroundColor() {
       if (this.$vuetify.theme.dark) {
@@ -90,7 +91,7 @@ export default {
 
       // create a copy of the bidData (readonly)
       let decryptedData = data.slice(0,8).concat([[...data[8]]])
-      //console.log(decryptedData);
+      console.log(data);
       //console.log(response);
 
       //i am the owner, decrypt question and answer crypted with owener public key with owner private key
@@ -104,13 +105,20 @@ export default {
         decryptedData[this.BID.messages][this.BID.answerForBenificiary] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.answerForBenificiary])
       }
 
+      console.log(decryptedData)
+
       return decryptedData;
     },
-    async getBidsContract() {
+    async getBids(questionIds) {
+      const data = await this.contract.getBids(questionIds, this.options);
+      console.log(data)
+      return data
+    },
+    async getBidsOwner() {
 
-      const data = await this.contract.getBidsContract(this.options);
+      const data = await this.contract.getBidsOwner(this.options);
       // const response = await this.provider.call(data);
-      //console.log(data);
+      console.log(data);
       // console.log(response);
       return data;
     },
@@ -137,10 +145,11 @@ export default {
 
       const beneficiaryBidLimit = await this.contract.bidLimits(this.question.toAddress);
       // if beneficiaryAddress public key is not generated already his keys
+      console.log(beneficiaryBidLimit)
       console.log(Number(beneficiaryBidLimit)/1e18)
-      console.log(Number(this.question.bid))
-      console.log(Number(beneficiaryBidLimit)/1e18 >= Number(this.question.bid))
-      if(Number(beneficiaryBidLimit)/1e18 > Number(this.question.bid)){
+      console.log(Number(Number(this.question.bid).toFixed(16)))
+      console.log(Number(beneficiaryBidLimit)/1e18 >= Number(Number(this.question.bid).toFixed(16)))
+      if(Number(beneficiaryBidLimit)/1e18 > Number(Number(this.question.bid).toFixed(16))){
         throw new Error(`Benificiary minimum bid limit is ${Number(beneficiaryBidLimit)/1e18} ETH.`)
       }
       
@@ -151,7 +160,7 @@ export default {
       console.log(encryptedQuestionBeneficiary)
 
       //check if user already generated their private key (owner user)
-      let encryptedPrivateKey = await this.getPrivateKey();
+      let encryptedPrivateKey = await this.getEncryptedPrivateKey();
       console.log(encryptedPrivateKey);
       // console.log(encryptedPrivateKey.length);
       // console.log(typeof encryptedPrivateKey);
@@ -163,49 +172,56 @@ export default {
            
       let data = null;
 
+      console.log(ethers.utils.parseEther(Number(this.question.bid).toFixed(16)))
+
       if (!isOwnerKeysAlreadySet) {
         console.log('isOwnerKeysAlreadySet: ',isOwnerKeysAlreadySet)
         const encryptedKeys = await this.generateEncryptedKeys()
         console.log(encryptedKeys)
 
         const encryptedPublicKeyOwner = encryptedKeys.identity.publicKey;
-        //encrypted question by from public key
+        //encrypted question by owner public key
         const encryptedQuestionOwner = EthCrypto.cipher.stringify(
           await EthCrypto.encryptWithPublicKey(encryptedPublicKeyOwner, this.question.text)
         )
         data = await this.contract.populateTransaction.makeNewWithSetKey(
+          ethers.utils.parseEther(Number(this.question.bid).toFixed(16)), //reward 
           this.question.toAddress, // toAddress
-          encryptedQuestionOwner, //question text
-          encryptedQuestionBeneficiary,
-          Math.abs(this.question.timeLimit.value), // time limit [s]  ----> if not =0, then it works
+          [encryptedQuestionOwner, //question text
+          encryptedQuestionBeneficiary],
+          Math.abs(this.question.timeLimit.value/this.BlockTime), // time limit [s]  ----> if not =0, then it works
           encryptedKeys.identity.publicKey, // fromAddress encrypted public key
           encryptedKeys.encryptedPrivateKey, // fromAddress encrypted private key
           0 // bidlimit TODO
         );
 
         //save locally the decrypted private key
-        const privateKey = await this.decryptPrivateKey();
+        const privateKey = encryptedKeys.identity.privateKey;
         this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
       }
       else{
         console.log('isOwnerKeysAlreadySet: ',isOwnerKeysAlreadySet)
         const encryptedPublicKeyOwner = await this.getPublicKey();
+        
         //encrypted question by from public key
         const encryptedQuestionOwner = EthCrypto.cipher.stringify(
           await EthCrypto.encryptWithPublicKey(encryptedPublicKeyOwner, this.question.text)
         )
+        console.log(encryptedQuestionOwner)
 
         data = await this.contract.populateTransaction.makeNew(
+          ethers.utils.parseEther(Number(this.question.bid).toFixed(16)), //reward 
           this.question.toAddress, // toAddress
-          encryptedQuestionOwner, //question encrypted by to user public key
-          encryptedQuestionBeneficiary, //question encrypted by to user public key
-          Math.abs(this.question.timeLimit.value) //Math.abs(this.question.timeLimit) // time limit [s]
+          [encryptedQuestionOwner, //question encrypted by to user public key
+          encryptedQuestionBeneficiary], //question encrypted by to user public key
+          Math.abs(this.question.timeLimit.value/this.BlockTime) //Math.abs(this.question.timeLimit) // time limit [s]
         );
       }
 
       let fee = 1; // 1%
       //let bidAmount = Number(this.question.bid)*100/(100-fee);
-      let bidAmountWei = Math.ceil(this.question.bid*1e18);
+      //let bidAmountWei = Math.ceil(this.question.bid*1e18);
+      let bidAmountWei = Number(ethers.utils.parseEther(Number(this.question.bid).toFixed(16)))
       let feeAmountWei = Math.ceil(bidAmountWei*fee/100);
       let transactionAmount = (bidAmountWei + feeAmountWei)/1e18;
       data.value = ethers.utils.parseEther(transactionAmount.toString());
@@ -273,8 +289,8 @@ export default {
 
         const data = await this.contract.populateTransaction.rewardSolvedBid(
           questionId,
-          encryptedAnswerByOwner,
-          encryptedAnswerByBeneficiary
+          [encryptedAnswerByOwner,
+          encryptedAnswerByBeneficiary]
         );
         data.value = 0;
         console.log(data);
@@ -319,8 +335,8 @@ export default {
       // console.log(response);
       return data;
     },
-    async getPrivateKey() {
-      const data = await this.contract.getPrivateKey(this.options);
+    async getEncryptedPrivateKey() {
+      const data = await this.contract.getEncryptedPrivateKey(this.options);
       //const response = await this.provider.call(data);
       // console.log(data);
       // console.log(response);
@@ -333,23 +349,31 @@ export default {
       else{
         try {
           const parsedEncryptedText = EthCrypto.cipher.parse(encryptedText)
+          console.log(this.decryptedPrivateKey)
           const plainText = await EthCrypto.decryptWithPrivateKey(this.decryptedPrivateKey, parsedEncryptedText);
           return plainText
         } catch (error) {
-          throw new Error('This text cannot be decrypted.');
+          //console.log(error)
+          return 'This text cannot be decrypted.'
+          //throw new Error('This text cannot be decrypted.');
         }
         
       }
     },
     async updateMyBids() {
         this.startLoading();
-        const ids = await this.getBidsContract();
+        const ids = await this.getBidsOwner();
         const bids = [];
         let errors = [];
+        console.log(ids)
+
+        const test = await this.getBid(1)
+        console.log(test)
 
         for(const id of ids){
           try {
             const bid = await this.getBid(id)
+            console.log(bid)
             const array = [...bid];
             array.push(id);
             bids.push(array);
@@ -362,6 +386,13 @@ export default {
         await this.$store.dispatch("bids/updateMyBids", bids);
         this.endLoading();
     },
+    async printMyBids() {
+      this.startLoading();
+      const ids = await this.getBidsOwner();
+      console.log(ids)
+      const bids = await this.getBids(ids);
+      console.log(bids)
+  },
     async updateBidsToMe() {
         this.startLoading();
         const ids = await this.getBidsBeneficiary();
@@ -388,7 +419,7 @@ export default {
         return address.slice(0, 5) + "..." + address.slice(-4);
     },
     dueStamp(timestamp,timeLimit){
-      const dueStamp = Number(timestamp) + Number(timeLimit)
+      const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
       const dueStampHex = "0x" + Number(dueStamp).toString(16)
       // console.log(timestamp)
       // console.log(dueStamp)
@@ -398,13 +429,13 @@ export default {
     },
     isTimeLimitExpired(timestamp,timeLimit){
       //if there is no expiration then the time limit was set to 0
-      if(timeLimit == 0)
+      if(timeLimit*this.BlockTime == 0)
         return false;
-      const dueStamp = Number(timestamp) + Number(timeLimit)
+      const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
       return dueStamp > this.now/1000
     },
     countdown(timestamp,timeLimit){
-      const dueStamp = Number(timestamp) + Number(timeLimit)
+      const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
       if(dueStamp < this.now/1000){
         return 0
       }
