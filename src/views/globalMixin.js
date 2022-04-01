@@ -225,9 +225,11 @@ export default {
       //console.log(this.decryptedPrivateKey);
     },
     async updateBlockNumber(){
-      const blockNumber = await this.provider.getBlockNumber();
-      console.log(blockNumber)
-      this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
+      if(this.provider !== null){
+        const blockNumber = await this.provider.getBlockNumber();
+        console.log(blockNumber)
+        this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
+      }
     }
   },
   mounted() {
@@ -237,6 +239,6 @@ export default {
     setInterval(() => {
       this.getNow();
       //this.updateBlockNumber()
-    }, 5000)
+    }, 20)
   },
 };

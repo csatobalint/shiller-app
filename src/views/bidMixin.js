@@ -11,8 +11,8 @@ export default {
   filters: {
     hexToDate: function (hex_unix_timestamp) {
       let unix_timestamp = parseInt(hex_unix_timestamp);
-      var a = new Date(unix_timestamp * 1000);
-      var months = [
+      let a = new Date(unix_timestamp * 1000);
+      let months = [
         "Jan",
         "Feb",
         "Mar",
@@ -26,13 +26,13 @@ export default {
         "Nov",
         "Dec",
       ];
-      var year = a.getFullYear();
-      var month = months[a.getMonth()];
-      var date = a.getDate();
-      var hour = a.getHours();
-      var min = a.getMinutes();
-      var sec = a.getSeconds();
-      var time =
+      let year = a.getFullYear();
+      let month = months[a.getMonth()];    
+      let date = (a.getDate().toString().length == 1) ? '0' + a.getDate() : a.getDate();
+      let hour = (a.getHours().toString().length == 1) ? '0' + a.getHours() : a.getHours();
+      let min = (a.getMinutes().toString().length == 1) ? '0' + a.getMinutes() : a.getMinutes();
+      let sec = (a.getSeconds().toString().length == 1) ? '0' + a.getSeconds() : a.getSeconds();
+      let time =
         date + " " + month + " " + year + " " + hour + ":" + min + ":" + sec;
       return time;
     },
@@ -47,6 +47,7 @@ export default {
         decryptedPrivateKey: state => state.auth.decryptedPrivateKey,
         BID: state => state.bids.BID,
         BlockTime: state => state.bids.BlockTime,
+        BlockNumber: state => state.bids.BlockNumber
     }),
     questionAnswerCardBackgroundColor() {
       if (this.$vuetify.theme.dark) {
@@ -77,8 +78,8 @@ export default {
     },
     options(){
       return {
-        gasPrice: 5000000000,
-        gasLimit: 1000000,
+        //gasPrice: 10000000000,
+        //gasLimit: 10000000,
         from: this.address
       };
     }
@@ -110,9 +111,36 @@ export default {
       return decryptedData;
     },
     async getBids(questionIds) {
-      const data = await this.contract.getBids(questionIds, this.options);
-      console.log(data)
-      return data
+      const datas = await this.contract.getBids(questionIds, this.options);
+      console.log(datas)
+      const decryptedDatas = [];
+      datas.forEach(data => {
+        //console.log(data)
+        this.decryptBidObject(data).then(value => decryptedDatas.push(value))
+      });
+      console.log(decryptedDatas)
+      return decryptedDatas
+    },
+    async decryptBidObject(data){
+      // create a copy of the bidData (readonly)
+      let decryptedData = data.slice(0,this.BID.messages).concat([[...data[this.BID.messages]]]).concat([data[this.BID.questionId]])
+      
+      //console.log(response);
+
+      //i am the owner, decrypt question and answer crypted with owener public key with owner private key
+      if (decryptedData[this.BID.ownerAddress] == this.address) {
+        decryptedData[this.BID.messages][this.BID.questionForOwner] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.questionForOwner])
+        decryptedData[this.BID.messages][this.BID.answerForOwner] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.answerForOwner])
+      } 
+      // i am the beneficaiary
+      else {
+        decryptedData[this.BID.messages][this.BID.questionForBenificiary] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.questionForBenificiary])
+        decryptedData[this.BID.messages][this.BID.answerForBenificiary] = await this.decryptTextWithPrivateKey(decryptedData[this.BID.messages][this.BID.answerForBenificiary])
+      }
+
+      //console.log(decryptedData);
+
+      return decryptedData;
     },
     async getBidsOwner() {
 
@@ -363,27 +391,30 @@ export default {
     async updateMyBids() {
         this.startLoading();
         const ids = await this.getBidsOwner();
-        const bids = [];
+        //const bids = [];
         let errors = [];
         console.log(ids)
 
-        const test = await this.getBid(1)
-        console.log(test)
+        // for(const id of ids){
+        //   try {
+        //     const bid = await this.getBid(id)
+        //     console.log(bid)
+        //     const array = [...bid];
+        //     array.push(id);
+        //     bids.push(array);
+        //   } catch (error) {
+        //     errors.push(error)
+        //   }
+        // }
 
-        for(const id of ids){
-          try {
-            const bid = await this.getBid(id)
-            console.log(bid)
-            const array = [...bid];
-            array.push(id);
-            bids.push(array);
-          } catch (error) {
-            errors.push(error)
-          }
+        try {
+          const bids = await this.getBids(ids);
+          await this.$store.dispatch("bids/updateMyBids", bids);
+        } catch (error) {
+          errors.push(error)
+          console.log(errors)
         }
         
-        console.log(errors)
-        await this.$store.dispatch("bids/updateMyBids", bids);
         this.endLoading();
     },
     async printMyBids() {
@@ -396,22 +427,28 @@ export default {
     async updateBidsToMe() {
         this.startLoading();
         const ids = await this.getBidsBeneficiary();
-        const bids = [];
+        //const bids = [];
         let errors = [];
 
-        for(const id of ids){
-          try {
-            const bid = await this.getBid(id)
-            const array = [...bid];
-            array.push(id);
-            bids.push(array);
-          } catch (error) {
-            errors.push(error)
-          }
+        // for(const id of ids){
+        //   try {
+        //     const bid = await this.getBid(id)
+        //     const array = [...bid];
+        //     array.push(id);
+        //     bids.push(array);
+        //   } catch (error) {
+        //     errors.push(error)
+        //   }
+        // }
+
+        try {
+          const bids = await this.getBids(ids);
+          await this.$store.dispatch("bids/updateBidsToMe", bids);
+        } catch (error) {
+          errors.push(error)
+          console.log(errors)
         }
         
-        console.log(errors)
-        await this.$store.dispatch("bids/updateBidsToMe", bids);
         this.endLoading();
 
     },
@@ -434,8 +471,8 @@ export default {
       const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
       return dueStamp > this.now/1000
     },
-    countdown(timestamp,timeLimit){
-      const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
+    countdown(item){
+      const dueStamp = Number(item[this.BID.timestamp]) + Number(item[this.BID.deltaBlockNumber]*this.BlockTime)
       if(dueStamp < this.now/1000){
         return 0
       }
@@ -450,6 +487,9 @@ export default {
       let minutes = Math.floor((distance % (1 * 60 * 60)) / (1 * 60));
       let seconds = Math.floor((distance % (1 * 60)) / 1);
       return hours + "h " + minutes + "m " + seconds + "s "
+    },
+    getExpiryBlockTime(item){
+      return Number(item[this.BID.deltaBlockNumber]) + Number(item[this.BID.blockNumber])
     }
   },
   mounted() {

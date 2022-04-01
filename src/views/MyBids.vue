@@ -162,118 +162,158 @@
         ></Tab>
         <template v-if="!isLoading">
           <template v-for="(item, index) in sortedBids">
-              <v-row :key="index" class="pb-5">
-                <v-card
-                  class="rounded-xl pa-2"
-                  :class="[item[BID.answered] ? 'answerQuestionBackground' : '']"
-                  width="100%"
-                >
-                  <v-card-subtitle class="pl-5 d-flex justify-space-between">
-                    <div>
-                      <span class="pr-2">Question</span>
-                      <v-tooltip right>
-                        <template v-slot:activator="{ on, attrs }">
-                          <v-chip
-                            small
-                            v-bind="attrs"
-                            v-on="on"
-                            @click="
-                              copyAddress('question' + item[BID.questionId])
-                            "
-                            >To:
-                            {{
-                              shortAddress(item[BID.beneficiaryAddress])
-                            }}</v-chip
-                          >
-                        </template>
-                        <v-icon>mdi-content-copy</v-icon>
-                        <span>{{ item[BID.beneficiaryAddress] }} </span>
-                      </v-tooltip>
-                      <input
-                        v-on:focus="$event.target.select()"
-                        :ref="'question' + item[BID.questionId]"
-                        readonly
-                        type="hidden"
-                        :value="item[BID.beneficiaryAddress]"
-                      />
-                    </div>
-                    <span>{{ item[BID.timestamp] | hexToDate }}</span>
-                  </v-card-subtitle>
-                  <v-card-text>
-                    <v-card
-                      :style="questionAnswerCardBackgroundColor"
-                      class="rounded-lg mb-2"
-                      outlined
-                      width="100%"
-                    >
-                      <v-card-text class="text-body-1">
-                        <v-row>
-                          <v-col>{{ item[BID.messages][0] }} </v-col>
-                        </v-row>
-                      </v-card-text>
-                    </v-card>
-                    <div v-if="item[BID.answered]" class="my-4">Answer</div>
-                    <v-card
-                      :style="questionAnswerCardBackgroundColor"
-                      class="rounded-lg"
-                      outlined
-                      width="100%"
-                      v-if="item[BID.answered]"
-                    >
-                      <v-card-text class="text-body-1">
-                        <v-row>
-                          <v-col> {{ item[BID.messages][2] }} </v-col>
-                        </v-row>
-                      </v-card-text>
-                    </v-card>
-                  </v-card-text>
-                  <v-divider class="mx-4"></v-divider>
-                  <v-card-title class="text-body-1">
-                    <v-row>
-                      <v-col bidDetails 
-                        class="text-left"
+            <v-row :key="index" class="pb-5">
+              <v-card
+                class="rounded-xl pa-2"
+                :class="[item[BID.answered] ? 'answerQuestionBackground' : '']"
+                width="100%"
+              >
+                <v-card-subtitle class="pl-5 d-flex justify-space-between">
+                  <div>
+                    <span class="pr-2">Question</span>
+                    <v-tooltip right>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-chip
+                          small
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="
+                            copyAddress('question' + item[BID.questionId])
+                          "
+                          >To:
+                          {{
+                            shortAddress(item[BID.beneficiaryAddress])
+                          }}</v-chip
+                        >
+                      </template>
+                      <v-icon>mdi-content-copy</v-icon>
+                      <span>{{ item[BID.beneficiaryAddress] }} </span>
+                    </v-tooltip>
+                    <input
+                      v-on:focus="$event.target.select()"
+                      :ref="'question' + item[BID.questionId]"
+                      readonly
+                      type="hidden"
+                      :value="item[BID.beneficiaryAddress]"
+                    />
+                  </div>
+                  <span>{{ item[BID.timestamp] | hexToDate }} #{{item[BID.questionId]}}</span>
+                </v-card-subtitle>
+                <v-card-text>
+                  <v-card
+                    :style="questionAnswerCardBackgroundColor"
+                    class="rounded-lg mb-2"
+                    outlined
+                    width="100%"
+                  >
+                    <v-card-text class="text-body-1">
+                      <v-row>
+                        <v-col>{{ item[BID.messages][0] }} </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                  <div v-if="item[BID.answered]" class="my-4">Answer</div>
+                  <v-card
+                    :style="questionAnswerCardBackgroundColor"
+                    class="rounded-lg"
+                    outlined
+                    width="100%"
+                    v-if="item[BID.answered]"
+                  >
+                    <v-card-text class="text-body-1">
+                      <v-row>
+                        <v-col> {{ item[BID.messages][2] }} </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-card-text>
+                <v-divider class="mx-4"></v-divider>
+                <v-card-title class="text-body-1">
+                  <v-row>
+                    <v-col bidDetails class="text-left"
                       >{{ parseInt(item[BID.value]) / 1e18 }} ETH
-                      </v-col>
-                      <v-col expireDetails
-                        class="text-body-2 text-right"
+                    </v-col>
+                    <v-col expireDetails class="text-body-2 text-right">
+                      <template
+                        v-if="
+                          !item[BID.answered] &&
+                          !item[BID.withdrawn] &&
+                          item[BID.deltaBlockNumber] != 0
+                        "
                       >
-                        <template v-if="
-                            !item[BID.answered] &&
-                            !item[BID.withdrawn] &&
-                            item[BID.deadline] != 0
-                        ">
-                          <span v-if="countdown(item[BID.timestamp], item[BID.deadline]) > 0">
-                            Expires in {{formatCountdownTime(countdown(item[BID.timestamp], item[BID.deadline]))}}
-                            at
-                            {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
-                          </span>
-                          <span v-else>
-                            Expired at
-                            {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
-                          </span>
-                        </template>
-                        &nbsp;
-                        <template v-if="!item[BID.answered] && !item[BID.withdrawn]">
-                          <v-btn
-                            :disabled="isTimeLimitExpired(item[BID.timestamp],item[BID.deadline])"
-                            color="seondary"
-                            outlined
-                            small
-                            @click="withdrawExpiredBid(item[BID.questionId])"
+                        <div
+                          v-if="
+                            countdown(item) > 0
+                          "
+                        >
+                          Expires in
+                          {{
+                            formatCountdownTime(
+                              countdown(item)
+                            )
+                          }}
+                          at
+                          {{
+                            dueStamp(
+                              item[BID.timestamp],
+                              item[BID.deltaBlockNumber]
+                            )
+                          }}
+                        </div>
+                        <span v-else>
+                          Expired at
+                          {{
+                            dueStamp(
+                              item[BID.timestamp],
+                              item[BID.deltaBlockNumber]
+                            )
+                          }}
+                        </span>
+                        <v-tooltip right>
+                          <template v-slot:activator="{ on, attrs }">
+                            <v-chip
+                              small
+                              v-bind="attrs"
+                              v-on="on"
+                            >?</v-chip
+                            >
+                          </template>
+                          <span>{{ item[BID.beneficiaryAddress] }} </span>
+                          {{ this}}
+                        </v-tooltip>
+                      </template>
+                      &nbsp;
+                      <template
+                        v-if="!item[BID.answered] && !item[BID.withdrawn]"
+                      >
+                        <v-btn
+                          :disabled="
+                            isTimeLimitExpired(
+                              item[BID.timestamp],
+                              item[BID.deltaBlockNumber]
+                            )
+                          "
+                          color="seondary"
+                          outlined
+                          small
+                          @click="withdrawExpiredBid(item[BID.questionId])"
                           >Withdraw
-                          </v-btn>
-                        </template>
-                      </v-col>
-                    </v-row>
-                  </v-card-title>
-                </v-card>
-              </v-row>
+                        </v-btn>
+                      </template>
+                    </v-col>
+                  </v-row>
+                </v-card-title>
+              </v-card>
+            </v-row>
           </template>
         </template>
         <template v-else>
           <v-row>
             <v-col class="text-center">
-              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+              <v-progress-circular
+                indeterminate
+                color="primary"
+              ></v-progress-circular>
             </v-col>
           </v-row>
         </template>
@@ -345,9 +385,8 @@ export default {
       this.$store.commit("bids/SET_TAB_FILTER", "Answered");
       this.updateMyBids();
       this.$store.dispatch("bindUsers");
-    }
-    else{
-      this.endLoading()
+    } else {
+      this.endLoading();
     }
   },
 };

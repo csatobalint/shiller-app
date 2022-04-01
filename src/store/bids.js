@@ -4,17 +4,34 @@ const bids = {
 	namespaced: true,
 
     state: {
+        // BID:{
+        //     answered: 0,
+        //     withdrawn: 1,
+        //     timestamp: 2,
+        //     deltaBlockNumber: 3,
+        //     value: 4,
+        //     sum: 5,
+        //     ownerAddress: 6,
+        //     beneficiaryAddress: 7,
+        //     messages: 8,
+        //     questionId: 9,
+        //     questionForOwner: 0,
+        //     questionForBenificiary: 1,
+        //     answerForOwner: 2,
+        //     answerForBenificiary: 3
+        // },
         BID:{
             answered: 0,
             withdrawn: 1,
-            timestamp: 2,
-            deadline: 3,
-            value: 4,
-            sum: 5,
-            ownerAddress: 6,
+            timestamp: 4,
+            blockNumber: 5,
+            deltaBlockNumber: 6,
+            value: 2,
+            sum: 3,
+            ownerAddress: 8,
             beneficiaryAddress: 7,
-            messages: 8,
-            questionId: 9,
+            messages: 9,
+            questionId: 10,
             questionForOwner: 0,
             questionForBenificiary: 1,
             answerForOwner: 2,
@@ -41,8 +58,8 @@ const bids = {
                 return state.myBids.filter(item => 
                     !item[state.BID.answered]  // not answered
                     && !item[state.BID.withdrawn]  // not withdrawn
-                    && item[state.BID.deadline] != 0 // not zero timelimit set
-                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) < Date.now()/1000) //time > deadline
+                    && item[state.BID.deltaBlockNumber] != 0 // not zero timelimit set
+                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deltaBlockNumber])*state.BlockTime) < Date.now()/1000) //time > deltaBlockNumber
                 )
             }
             else if (state.tabFilter == 'Pending'){
@@ -50,9 +67,9 @@ const bids = {
                     !item[state.BID.answered]  // not answered
                     && !item[state.BID.withdrawn]  // not withdrawn
                     && (
-                        item[state.BID.deadline] == 0 // zero timelimit set
+                        item[state.BID.deltaBlockNumber] == 0 // zero timelimit set
                         || 
-                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) >= Date.now()/1000) //time < deadline
+                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deltaBlockNumber])*state.BlockTime) >= Date.now()/1000) //time < deltaBlockNumber
                     ) 
                 )
             }
@@ -68,8 +85,8 @@ const bids = {
                 return state.bidsToMe.filter(item => 
                     !item[state.BID.answered]  // not answered
                     && !item[state.BID.withdrawn]  // not withdrawn
-                    && item[state.BID.deadline] != 0 // not zero timelimit set
-                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) < Date.now()/1000) //time > deadline
+                    && item[state.BID.deltaBlockNumber] != 0 // not zero timelimit set
+                    && ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deltaBlockNumber])*state.BlockTime) < Date.now()/1000) //time > deltaBlockNumber
                 )
             }
             else if (state.tabFilter == 'Pending'){
@@ -77,9 +94,9 @@ const bids = {
                     !item[state.BID.answered]  // not answered
                     && !item[state.BID.withdrawn]  // not withdrawn
                     && (
-                        item[state.BID.deadline] == 0 // zero timelimit set
+                        item[state.BID.deltaBlockNumber] == 0 // zero timelimit set
                         || 
-                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deadline])*state.BlockTime) >= Date.now()/1000) //time < deadline
+                        ((Number(item[state.BID.timestamp]) + Number(item[state.BID.deltaBlockNumber])*state.BlockTime) >= Date.now()/1000) //time < deltaBlockNumber
                     ) 
                 )
             }

@@ -31,7 +31,9 @@
               <v-row :key="index" class="pb-5">
                 <v-card
                   class="rounded-xl pa-2"
-                  :class="[item[BID.answered] ? 'answerQuestionBackground' : '']"
+                  :class="[
+                    item[BID.answered] ? 'answerQuestionBackground' : '',
+                  ]"
                   width="100%"
                 >
                   <v-card-subtitle class="pl-5 d-flex justify-space-between">
@@ -61,7 +63,7 @@
                         :value="item[BID.ownerAddress]"
                       />
                     </div>
-                    {{ item[BID.timestamp] | hexToDate }}
+                    {{ item[BID.timestamp] | hexToDate }} #{{item[BID.questionId]}}
                   </v-card-subtitle>
                   <v-card-text>
                     <v-card
@@ -81,10 +83,9 @@
                       <div
                         v-show="
                           !item[BID.withdrawn] &&
-                          ((item[BID.deadline] != 0 &&
-                            countdown(item[BID.timestamp], item[BID.deadline]) >
-                              0) ||
-                            item[BID.deadline] == 0)
+                          ((item[BID.deltaBlockNumber] != 0 &&
+                            countdown(item) > 0) ||
+                            item[BID.deltaBlockNumber] == 0)
                         "
                         class="my-4"
                       >
@@ -94,10 +95,9 @@
                         v-if="
                           !item[BID.answered] &&
                           !item[BID.withdrawn] &&
-                          ((item[BID.deadline] != 0 &&
-                            countdown(item[BID.timestamp], item[BID.deadline]) >
-                              0) ||
-                            item[BID.deadline] == 0)
+                          ((item[BID.deltaBlockNumber] != 0 &&
+                            countdown(item) > 0) ||
+                            item[BID.deltaBlockNumber] == 0)
                         "
                         color="secondary"
                         outlined
@@ -127,10 +127,9 @@
                       v-show="
                         !item[BID.answered] &&
                         !item[BID.withdrawn] &&
-                        ((item[BID.deadline] != 0 &&
-                          countdown(item[BID.timestamp], item[BID.deadline]) >
-                            0) ||
-                          item[BID.deadline] == 0)
+                        ((item[BID.deltaBlockNumber] != 0 &&
+                          countdown(item) > 0) ||
+                          item[BID.deltaBlockNumber] == 0)
                       "
                       v-else
                     >
@@ -142,12 +141,9 @@
                                 !(
                                   !item[BID.answered] &&
                                   !item[BID.withdrawn] &&
-                                  ((item[BID.deadline] != 0 &&
-                                    countdown(
-                                      item[BID.timestamp],
-                                      item[BID.deadline]
-                                    ) > 0) ||
-                                    item[BID.deadline] == 0)
+                                  ((item[BID.deltaBlockNumber] != 0 &&
+                                    countdown(item) > 0) ||
+                                    item[BID.deltaBlockNumber] == 0)
                                 )
                               "
                               name="answer"
@@ -170,28 +166,54 @@
                         v-if="
                           !item[BID.answered] &&
                           !item[BID.withdrawn] &&
-                          item[BID.deadline] != 0
+                          item[BID.deltaBlockNumber] != 0
                         "
                         class="text-body-2 text-right"
                       >
                         <span
                           v-if="
-                            countdown(item[BID.timestamp], item[BID.deadline]) > 0
+                            countdown(item) > 0
                           "
                         >
-                          Expires in
+                          Expires in {{formatCountdownTime(countdown(item))}} at
                           {{
-                            formatCountdownTime(
-                              countdown(item[BID.timestamp], item[BID.deadline])
+                            dueStamp(
+                              item[BID.timestamp],
+                              item[BID.deltaBlockNumber]
                             )
                           }}
-                          at
-                          {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
                         </span>
                         <span v-else>
                           Expired at
-                          {{ dueStamp(item[BID.timestamp], item[BID.deadline]) }}
+                          {{
+                            dueStamp(
+                              item[BID.timestamp],
+                              item[BID.deltaBlockNumber]
+                            )
+                          }}
                         </span>
+                        <v-tooltip right>
+                          <template v-slot:activator="{ on, attrs }">
+                            <span
+                              small
+                              v-bind="attrs"
+                              v-on="on"
+                            >
+                              <v-icon>mdi-information-outline</v-icon>
+                            </span>
+                          </template>
+                          <span>
+                            <template v-if="countdown(item)> 0">
+                              Expires
+                            </template>
+                            <template v-else>
+                              Expired
+                            </template> 
+                            at blocknumber: {{ getExpiryBlockTime(item) }}
+                          </span>
+                          <br>
+                          <span>Current chain blocknumber: {{BlockNumber}}</span>
+                        </v-tooltip>
                       </v-col>
                     </v-row>
                   </v-card-title>
@@ -203,19 +225,16 @@
         <template v-else>
           <v-row>
             <v-col class="text-center">
-              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+              <v-progress-circular
+                indeterminate
+                color="primary"
+              ></v-progress-circular>
             </v-col>
           </v-row>
         </template>
         <div v-if="sortedBids.length == 0 && !isLoading">
-          <v-card
-            class="rounded-xl mt-5 pa-2 darken-1"
-            outlined
-            width="100%"
-          >
-            <v-card-subtitle
-              >No questions have been found.</v-card-subtitle
-            >
+          <v-card class="rounded-xl mt-5 pa-2 darken-1" outlined width="100%">
+            <v-card-subtitle>No questions have been found.</v-card-subtitle>
           </v-card>
         </div>
       </v-col>
@@ -241,9 +260,11 @@ export default {
   },
   methods: {
     reward(item) {
-
-      if(this.answers[item[this.BID.questionId]] === undefined || this.answers[item[this.BID.questionId]] === '')
-        this.openNotificationSnackbar('You cannot send an empty answer.')
+      if (
+        this.answers[item[this.BID.questionId]] === undefined ||
+        this.answers[item[this.BID.questionId]] === ""
+      )
+        this.openNotificationSnackbar("You cannot send an empty answer.");
       else
         this.rewardSolvedBid(
           item[this.BID.questionId],
@@ -261,8 +282,8 @@ export default {
     if (this.isMetaMaskAuthenticated) {
       this.$store.commit("bids/SET_TAB_FILTER", "Pending");
       this.updateBidsToMe();
-    }else{
-      this.endLoading()
+    } else {
+      this.endLoading();
     }
   },
 };
