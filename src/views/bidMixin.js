@@ -455,23 +455,22 @@ export default {
     shortAddress(address){
         return address.slice(0, 5) + "..." + address.slice(-4);
     },
-    dueStamp(timestamp,timeLimit){
-      const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
-      const dueStampHex = "0x" + Number(dueStamp).toString(16)
-      // console.log(timestamp)
-      // console.log(dueStamp)
-      // console.log(dueStampHex)
-  
+    expiryTimeStamp(item){
+      const dueStamp = Number(item[this.BID.timestamp]) + Number(item[this.BID.deltaBlockNumber]*this.BlockTime)
+      const dueStampHex = "0x" + Number(dueStamp).toString(16) 
       return this.$options.filters.hexToDate(dueStampHex)
     },
-    isTimeLimitExpired(timestamp,timeLimit){
+    expiryBlockTime(item){
+      return Number(item[this.BID.deltaBlockNumber]) + Number(item[this.BID.blockNumber])
+    },
+    isNotExpired(item){
       //if there is no expiration then the time limit was set to 0
-      if(timeLimit*this.BlockTime == 0)
-        return false;
-      const dueStamp = Number(timestamp) + Number(timeLimit*this.BlockTime)
+      if(item[this.BID.deltaBlockNumber] == 0)
+        return true;
+      const dueStamp = Number(item[this.BID.timestamp]) + Number(item[this.BID.deltaBlockNumber]*this.BlockTime)
       return dueStamp > this.now/1000
     },
-    countdown(item){
+    expiriesInSeconds(item){
       const dueStamp = Number(item[this.BID.timestamp]) + Number(item[this.BID.deltaBlockNumber]*this.BlockTime)
       if(dueStamp < this.now/1000){
         return 0
@@ -482,15 +481,13 @@ export default {
         return distance
       }
     },
-    formatCountdownTime(distance){
+    countdown(item){
+      let distance = this.expiriesInSeconds(item)
       let hours = Math.floor((distance % (1 * 60 * 60 * 24)) / (1 * 60 * 60));
       let minutes = Math.floor((distance % (1 * 60 * 60)) / (1 * 60));
       let seconds = Math.floor((distance % (1 * 60)) / 1);
       return hours + "h " + minutes + "m " + seconds + "s "
     },
-    getExpiryBlockTime(item){
-      return Number(item[this.BID.deltaBlockNumber]) + Number(item[this.BID.blockNumber])
-    }
   },
   mounted() {
     console.log("hello from mixin!");

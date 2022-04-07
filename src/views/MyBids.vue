@@ -177,14 +177,10 @@
                           small
                           v-bind="attrs"
                           v-on="on"
-                          @click="
-                            copyAddress('question' + item[BID.questionId])
-                          "
-                          >To:
-                          {{
-                            shortAddress(item[BID.beneficiaryAddress])
-                          }}</v-chip
-                        >
+                          @click="copyAddress('question' + item[BID.questionId])"
+                          >
+                          To: {{shortAddress(item[BID.beneficiaryAddress])}}
+                        </v-chip>
                       </template>
                       <v-icon>mdi-content-copy</v-icon>
                       <span>{{ item[BID.beneficiaryAddress] }} </span>
@@ -197,7 +193,9 @@
                       :value="item[BID.beneficiaryAddress]"
                     />
                   </div>
-                  <span>{{ item[BID.timestamp] | hexToDate }} #{{item[BID.questionId]}}</span>
+                  <span>
+                    {{ item[BID.timestamp] | hexToDate }} #{{item[BID.questionId]}}
+                  </span>
                 </v-card-subtitle>
                 <v-card-text>
                   <v-card
@@ -212,7 +210,9 @@
                       </v-row>
                     </v-card-text>
                   </v-card>
-                  <div v-if="item[BID.answered]" class="my-4">Answer</div>
+                  <span v-if="item[BID.answered]" class="my-4">
+                    Answer
+                  </span>
                   <v-card
                     :style="questionAnswerCardBackgroundColor"
                     class="rounded-lg"
@@ -230,7 +230,7 @@
                 <v-divider class="mx-4"></v-divider>
                 <v-card-title class="text-body-1">
                   <v-row>
-                    <v-col bidDetails class="text-left"
+                    <v-col cols="2" bidDetails class="text-left"
                       >{{ parseInt(item[BID.value]) / 1e18 }} ETH
                     </v-col>
                     <v-col expireDetails class="text-body-2 text-right">
@@ -241,45 +241,30 @@
                           item[BID.deltaBlockNumber] != 0
                         "
                       >
-                        <div
-                          v-if="
-                            countdown(item) > 0
-                          "
-                        >
+                        <span v-if="expiriesInSeconds(item) > 0">
                           Expires in
-                          {{
-                            formatCountdownTime(
-                              countdown(item)
-                            )
-                          }}
-                          at
-                          {{
-                            dueStamp(
-                              item[BID.timestamp],
-                              item[BID.deltaBlockNumber]
-                            )
-                          }}
-                        </div>
+                          {{ countdown(item) }} at
+                          {{ expiryTimeStamp(item) }}
+                        </span>
                         <span v-else>
-                          Expired at
-                          {{
-                            dueStamp(
-                              item[BID.timestamp],
-                              item[BID.deltaBlockNumber]
-                            )
-                          }}
+                          Expired at {{ expiryTimeStamp(item) }}
                         </span>
                         <v-tooltip right>
                           <template v-slot:activator="{ on, attrs }">
-                            <v-chip
-                              small
-                              v-bind="attrs"
-                              v-on="on"
-                            >?</v-chip
-                            >
+                            <span small v-bind="attrs" v-on="on">
+                              <v-icon>mdi-information-outline</v-icon>
+                            </span>
                           </template>
-                          <span>{{ item[BID.beneficiaryAddress] }} </span>
-                          {{ this}}
+                          <span>
+                            <template v-if="expiriesInSeconds(item) > 0">
+                              Expires
+                            </template>
+                            <template v-else> Expired </template>
+                            at blocknumber: {{ expiryBlockTime(item) }}
+                          </span>
+                          <br />
+                          <span>Current chain blocknumber: {{ BlockNumber }}
+                          </span>
                         </v-tooltip>
                       </template>
                       &nbsp;
@@ -287,12 +272,7 @@
                         v-if="!item[BID.answered] && !item[BID.withdrawn]"
                       >
                         <v-btn
-                          :disabled="
-                            isTimeLimitExpired(
-                              item[BID.timestamp],
-                              item[BID.deltaBlockNumber]
-                            )
-                          "
+                          :disabled="!isNotExpired(item)"
                           color="seondary"
                           outlined
                           small
