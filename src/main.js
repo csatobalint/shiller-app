@@ -5,6 +5,8 @@ import store from './store'
 import vuetify from './plugins/vuetify'
 import AsyncComputed from 'vue-async-computed'
 Vue.use(AsyncComputed)
+import VueMeta from 'vue-meta'
+Vue.use(VueMeta)
 
 Vue.config.productionTip = false
 

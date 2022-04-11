@@ -6,9 +6,9 @@
         <v-row class="py-5">
           <h1>My profile</h1>
         </v-row>
-        <v-btn @click="setKeysWithBidLimit(0.01)">SET KEYS WITH BID LIMIT</v-btn>
+        <!-- <v-btn @click="setKeysWithBidLimit(0.01)">SET KEYS WITH BID LIMIT</v-btn> -->
         <v-row class="pb-5">
-          <v-card class="pa-4 foreground1" width="100%" rounded="xl">
+          <v-card class="pa-4 foreground1" width="100%" rounded="xl" :disabled="isLoading">
             <v-card-text metamask class="d-flex align-center">
               <div>
                 <v-img
@@ -53,7 +53,6 @@
                     v-model="bidLimit"
                     @keypress="NumbersOnly"
                     :rules="[rules.required, rules.positiveNumber]"
-                    dense
                     outlined
                   ></v-text-field>
                 </v-col>
@@ -83,9 +82,11 @@
                   suffix="ETH"
                   hide-details="auto"
                   @keypress="NumbersOnly"
-                  :rules="[rules.required, rules.positiveNumber]"
+                  :rules="[rules.positiveNumber]"
                 ></v-text-field>
                 <v-btn
+                  :disabled="bidLimit == 0"
+                  v-show="bidLimit != 0"
                   class="ml-1"
                   color="primary darken-1"
                   outlined

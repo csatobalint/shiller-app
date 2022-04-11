@@ -36,7 +36,7 @@
                 >
                   <v-card-subtitle class="pl-5 d-flex justify-space-between">
                     <div>
-                      <span class="pr-2">Question</span>
+                      <span class="pr-2">Question #{{item[BID.questionId]}}</span>
                       <v-tooltip right>
                         <template v-slot:activator="{ on, attrs }">
                           <v-chip
@@ -60,7 +60,7 @@
                       />
                     </div>
                     <span>
-                      {{ item[BID.timestamp] | hexToDate }} #{{item[BID.questionId]}}
+                      {{ item[BID.timestamp] | hexToDate }}
                     </span>
                   </v-card-subtitle>
                   <v-card-text>
@@ -204,7 +204,21 @@
         </template>
         <div v-if="sortedBids.length == 0 && !isLoading">
           <v-card class="rounded-xl mt-5 pa-2 darken-1" outlined width="100%">
-            <v-card-subtitle>No questions have been found.</v-card-subtitle>
+            <v-card-subtitle v-if="!isMetaMaskAuthenticated">You have to authenticate with your wallet to see your questions.</v-card-subtitle>
+            <v-card-subtitle v-else>
+              <span v-if="$store.state.bids.tabFilter == 'Pending'">
+                You do not have any {{$store.state.bids.tabFilter}} questions.
+              </span>
+              <span v-else-if="$store.state.bids.tabFilter == 'Answered'">
+                You do not have any {{$store.state.bids.tabFilter}} questions.
+              </span>
+              <span v-else-if="$store.state.bids.tabFilter == 'Expired'">
+                You do not have any {{$store.state.bids.tabFilter}} questions.
+              </span>
+              <span v-else>
+                No questions have been sent to this address.
+              </span>
+            </v-card-subtitle>
           </v-card>
         </div>
       </v-col>
@@ -250,6 +264,7 @@ export default {
       this.$store.commit("bids/SET_TAB_FILTER", "Pending");
       this.updateBidsToMe();
     } else {
+      this.$router.push('/')
       this.endLoading();
     }
   },

@@ -140,38 +140,38 @@ export default {
     async getBidLimit() {
       const data = await this.contract.bidLimits(this.address);
       //const response = await this.provider.call(data);
-      console.log(data);
+      //console.log(data);
       // console.log(response);
       return data / 1e18;
     },
     async setBidLimit(bidLimit) {
+      this.startLoading();
       const data = await this.contract.populateTransaction.setBidLimit(
         ethers.utils.parseEther(bidLimit.toString())
       );
-      // console.log("Data: ", data)
+      // sign with my address
+      const response = await this.signer.populateTransaction(data);
+      // send transation
+      let transaction = await this.signer.sendTransaction(response);
+      await this.waitForMetaMaskTransaction(transaction);
+      this.endLoading();
 
-      // const response = await this.signer.populateTransaction(data);
-      // console.log("Response: ", response)
-
-      // const tx = this.signer.sendTransaction(response);
-      // console.log("Tx: ", tx);
-      await this.waitForMetaMaskTransaction(data);
-      alert('done');
     },
     async setKeysWithBidLimit(bidLimit){
+      this.startLoading();
       //get owner ethereum public key -> used for identity private key encryption
       const metamaskPublicKey = await ethereum.request({ 
           method: "eth_getEncryptionPublicKey", 
           params: [this.address] 
       })
 
-      console.log("Pubkey for account ", this.address, " is: ", metamaskPublicKey);
+      //console.log("Pubkey for account ", this.address, " is: ", metamaskPublicKey);
 
       //generate public-private key pair
       const identity  = EthCrypto.createIdentity();
-      console.log("Identity: ", identity)
-      console.log("Identity public key: ", identity.publicKey)
-      console.log("!!!!!!Identity private key: ", identity.privateKey)
+      //console.log("Identity: ", identity)
+      //console.log("Identity public key: ", identity.publicKey)
+      //console.log("!!!!!!Identity private key: ", identity.privateKey)
       
       // let identityPublicKeyFromPrivateKey = EthCrypto.publicKeyByPrivateKey( identity.privateKey )
       // console.log("Identity public key: ", identityPublicKeyFromPrivateKey)
@@ -185,7 +185,7 @@ export default {
          data: identity.privateKey,
          version: 'x25519-xsalsa20-poly1305',
        })),'utf8'));
-       console.log("Encrypted privatekey: ", encryptedPrivateKey)
+       //console.log("Encrypted privatekey: ", encryptedPrivateKey)
 
       // construct transaction object
       const data = await this.contract.populateTransaction.setKeysWithBidLimit(
@@ -194,14 +194,14 @@ export default {
         ethers.utils.parseEther(bidLimit.toString()) //bid limit
       );
 
-      this.waitForMetaMaskTransaction(data)
-    },
-    async waitForMetaMaskTransaction(data){
       // sign with my address
       const response = await this.signer.populateTransaction(data);
-      //console.log(response);
       // send transation
       let transaction = await this.signer.sendTransaction(response);
+      await this.waitForMetaMaskTransaction(transaction);
+      this.endLoading();
+    },
+    async waitForMetaMaskTransaction(transaction){
       transaction = await this.provider.getTransaction ( transaction.hash )
       while (transaction.blockNumber === null) {
         await this.sleep(1000)
@@ -216,7 +216,7 @@ export default {
         from: this.address,
       };
       const encryptedPrivateKey = await this.contract.getEncryptedPrivateKey(options);
-      console.log(encryptedPrivateKey);
+      //console.log(encryptedPrivateKey);
 
       return await ethereum.request({
         method: "eth_decrypt",
@@ -227,7 +227,7 @@ export default {
     async updateBlockNumber(){
       if(this.provider !== null){
         const blockNumber = await this.provider.getBlockNumber();
-        console.log(blockNumber)
+        //console.log(blockNumber)
         this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
       }
     }

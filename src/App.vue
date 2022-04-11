@@ -208,92 +208,95 @@
                 </v-dialog>
               </div>
             </template>
-            <template v-if="isAuthenticated && isMetaMaskAuthenticated && user !== null">
-              <template>
-                <v-menu v-model="showMenu" absolute offset-y style="max-width: 600px">
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-avatar class="ml-2" size=40 v-if="user.photoURL" v-bind="attrs" v-on="on">
-                      <img :src="user.photoURL" />
-                    </v-avatar>
-                    <v-avatar
-                      v-else
-                      color="primary"
-                      size="40"
-                      v-bind="attrs"
-                      v-on="on"
-                      ><v-icon dark> mdi-account-circle </v-icon>
-                    </v-avatar>
-                  </template>
-                  <v-list>
-                    <v-list-item>
-                      <v-list-item-avatar>
-                        <v-avatar v-if="user.photoURL">
-                          <img :src="user.photoURL" size="40"/>
-                        </v-avatar>
-                        <v-avatar v-else color="primary" size="40"
-                          ><v-icon dark> mdi-account-circle </v-icon>
-                        </v-avatar>
-                      </v-list-item-avatar>
-                      <v-list-item-content>{{ userName }}</v-list-item-content>
-                    </v-list-item>
-
-                    <v-list-item link>
-                      <v-list-item-content>
-                        <v-list-item-title class="text-h6">
-                          {{ user.displayName }}
-                        </v-list-item-title>
-                        <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
-                      </v-list-item-content>
-
-                      <v-list-item-action>
-                        <v-icon>mdi-menu-down</v-icon>
-                      </v-list-item-action>
-                    </v-list-item>
-                  </v-list>
-                  <v-divider></v-divider>
-                  <v-list nav dense>
-                    <v-list-item-group v-model="selectedItem" color="primary">
-                      <v-list-item @click="$router.push('/profile')">
-                        <v-list-item-icon>
-                          <v-icon>mdi-cog-outline</v-icon>
-                        </v-list-item-icon>
-                        <v-list-item-content>
-                          <v-list-item-title>Settings</v-list-item-title>
-                        </v-list-item-content>
-                      </v-list-item>
-                      <v-list-item @click="signOut">
-                        <v-list-item-icon>
-                          <v-icon>mdi-logout</v-icon>
-                        </v-list-item-icon>
-                        <v-list-item-content>
-                          <v-list-item-title>Logout</v-list-item-title>
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list-item-group>
-                  </v-list>
-                </v-menu>
-              </template>
-            </template>
-            <template v-else>
-              <v-tooltip left>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn text icon color="">
-                      <v-btn
-                        class="ml-2"
+            <template v-if="isMetaMaskAuthenticated">
+              <template v-if="isAuthenticated && isMetaMaskAuthenticated && user !== null">
+                <template>
+                  <v-menu v-model="showMenu" absolute offset-y style="max-width: 600px">
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-avatar class="ml-2" size=40 v-if="user.photoURL" v-bind="attrs" v-on="on">
+                        <img :src="user.photoURL" />
+                      </v-avatar>
+                      <v-avatar
+                        v-else
                         color="primary"
                         size="40"
-                        fab
-                        outlined small
                         v-bind="attrs"
                         v-on="on"
-                        @click="signInWithTwitter()"
-                        ><v-icon dark> mdi-twitter </v-icon>
+                        ><v-icon dark> mdi-account-circle </v-icon>
+                      </v-avatar>
+                    </template>
+                    <v-list>
+                      <v-list-item>
+                        <v-list-item-avatar>
+                          <v-avatar v-if="user.photoURL">
+                            <img :src="user.photoURL" size="40"/>
+                          </v-avatar>
+                          <v-avatar v-else color="primary" size="40"
+                            ><v-icon dark> mdi-account-circle </v-icon>
+                          </v-avatar>
+                        </v-list-item-avatar>
+                        <v-list-item-content>{{ userName }}</v-list-item-content>
+                      </v-list-item>
+
+                      <v-list-item link>
+                        <v-list-item-content>
+                          <v-list-item-title class="text-h6">
+                            {{ user.displayName }}
+                          </v-list-item-title>
+                          <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+                        </v-list-item-content>
+
+                        <v-list-item-action>
+                          <v-icon>mdi-menu-down</v-icon>
+                        </v-list-item-action>
+                      </v-list-item>
+                    </v-list>
+                    <v-divider></v-divider>
+                    <v-list nav dense>
+                      <v-list-item-group v-model="selectedItem" color="primary">
+                        <v-list-item @click="$router.push('/profile')">
+                          <v-list-item-icon>
+                            <v-icon>mdi-cog-outline</v-icon>
+                          </v-list-item-icon>
+                          <v-list-item-content>
+                            <v-list-item-title>Settings</v-list-item-title>
+                          </v-list-item-content>
+                        </v-list-item>
+                        <v-list-item @click="signOut">
+                          <v-list-item-icon>
+                            <v-icon>mdi-logout</v-icon>
+                          </v-list-item-icon>
+                          <v-list-item-content>
+                            <v-list-item-title>Logout</v-list-item-title>
+                          </v-list-item-content>
+                        </v-list-item>
+                      </v-list-item-group>
+                    </v-list>
+                  </v-menu>
+                </template>
+              </template>
+              <template v-else>
+                <v-tooltip left>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn text icon color="">
+                        <v-btn
+                          class="ml-2"
+                          color="primary"
+                          size="40"
+                          fab
+                          outlined small
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="signInWithTwitter()"
+                          ><v-icon dark> mdi-twitter </v-icon>
+                        </v-btn>
                       </v-btn>
-                    </v-btn>
-                  </template>
-                  <span>Connect with Twitter account</span>
+                    </template>
+                    <span>Connect with Twitter account</span>
                 </v-tooltip>
+              </template>
             </template>
+            
           </div>
         </v-col>
       </v-row>
@@ -443,6 +446,19 @@ import globaMixin from "./views/globalMixin";
 
 export default {
   name: "App",
+  metaInfo: {
+      // if no subcomponents specify a metaInfo.title, this title will be used
+      title: 'cASK',
+      // // all titles will be injected into this template
+      // titleTemplate: '%s | cASK Me'
+      meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+      ],
+      link: [
+      { rel: 'icon', href: '/cask32.png', type: "image/png" }
+    ]
+  },
   mixins: [globaMixin],
   data() {
     return {
@@ -589,7 +605,7 @@ export default {
             const signer = provider.getSigner();
             const address = await signer.getAddress();
             this.$store.dispatch("auth/updateMetaMaskAddress", address);
-            console.log("Account:", address);
+            //console.log("Account:", address);
 
             // Get the contract
             const contract = new ethers.Contract(
@@ -598,7 +614,7 @@ export default {
               this.provider
             );
             this.$store.dispatch("auth/updateMetaMaskContract", contract);
-            console.log("Contract:", contract);
+            //console.log("Contract:", contract);
 
             //Check it the user already set its keys
             const ownerPublicKey = await this.contract.publicKeys(this.address);
@@ -625,13 +641,13 @@ export default {
               });
               const privateKey = await this.decryptPrivateKey();
               this.closeNotificationDialog();
-              console.log("XXXXXXXXX Decrypted private key: ", privateKey);
+              //console.log("XXXXXXXXX Decrypted private key: ", privateKey);
               this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
             }
 
               // Get the current block number of the chain
               const blockNumber = await this.provider.getBlockNumber();
-              console.log(blockNumber)
+              //console.log(blockNumber)
               this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
 
           } else {

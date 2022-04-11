@@ -15,6 +15,7 @@
             >
               <v-icon dark> mdi-refresh </v-icon>
             </v-btn> -->
+            <v-form v-model="isFormValid">
             <v-dialog v-model="dialog" persistent max-width="800px">
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
@@ -29,7 +30,7 @@
                   <v-icon dark> mdi-plus </v-icon>
                 </v-btn>
               </template>
-              <v-card>
+              <v-card :disabled="isLoading">
                 <v-card-title>
                   <span class="text-h5 py-5">New question</span>
                 </v-card-title>
@@ -95,9 +96,9 @@
                           v-model="question.bid"
                           :rules="[rules.required, rules.positiveNumber]"
                           :hint="
-                            `Fee of 1% will be added to the bid. Total value is ` +
-                            this.question.bid * 1.01 +
-                            ' ETH'
+                            `Total question price is ` +
+                            Number(this.question.bid * 1.01).toFixed(16) +
+                            ' ETH including an extra fee of 1%.'
                           "
                           persistent-hint
                           outlined
@@ -144,12 +145,20 @@
                   >
                     Close
                   </v-btn>
-                  <v-btn color="primary darken-1" outlined @click="makeNew">
+                  <v-btn
+                    color="primary darken-1"
+                    outlined
+                    @click="resetForm"
+                  >
+                    Reset
+                  </v-btn>
+                  <v-btn color="primary darken-1" outlined :disabled="!isMetaMaskAuthenticated || !isFormValid" @click="makeNew" >
                     Send
                   </v-btn>
                 </v-card-actions>
               </v-card>
             </v-dialog>
+            </v-form >
           </v-col>
         </v-row>
         <Tab
@@ -170,7 +179,7 @@
               >
                 <v-card-subtitle class="pl-5 d-flex justify-space-between">
                   <div>
-                    <span class="pr-2">Question</span>
+                    <span class="pr-2">Question #{{item[BID.questionId]}}</span>
                     <v-tooltip right>
                       <template v-slot:activator="{ on, attrs }">
                         <v-chip
@@ -185,6 +194,15 @@
                       <v-icon>mdi-content-copy</v-icon>
                       <span>{{ item[BID.beneficiaryAddress] }} </span>
                     </v-tooltip>
+                    &nbsp;
+                    <a 
+                      v-if="Object.keys(userMetamaskDict).find(key => userMetamaskDict[key] === item[BID.beneficiaryAddress])" 
+                      style="text-decoration: none;" 
+                      href="https://twitter.com/_BalintCsato" 
+                      target="_blank"
+                    >
+                      @{{Object.keys(userMetamaskDict).find(key => userMetamaskDict[key] === item[BID.beneficiaryAddress])}}
+                    </a>
                     <input
                       v-on:focus="$event.target.select()"
                       :ref="'question' + item[BID.questionId]"
@@ -194,7 +212,7 @@
                     />
                   </div>
                   <span>
-                    {{ item[BID.timestamp] | hexToDate }} #{{item[BID.questionId]}}
+                    {{ item[BID.timestamp] | hexToDate }}
                   </span>
                 </v-card-subtitle>
                 <v-card-text>
@@ -272,8 +290,7 @@
                         v-if="!item[BID.answered] && !item[BID.withdrawn]"
                       >
                         <v-btn
-                          :disabled="!isNotExpired(item)"
-                          color="seondary"
+                          :disabled="expiriesInSeconds(item) > 0"
                           outlined
                           small
                           @click="withdrawExpiredBid(item[BID.questionId])"
@@ -299,7 +316,21 @@
         </template>
         <div v-if="sortedBids.length == 0 && !isLoading">
           <v-card class="rounded-xl mt-5 pa-2 darken-1" outlined width="100%">
-            <v-card-subtitle>No questions have been found.</v-card-subtitle>
+            <v-card-subtitle v-if="!isMetaMaskAuthenticated">You have to authenticate with your wallet to see your questions.</v-card-subtitle>
+            <v-card-subtitle v-else>
+              <span v-if="$store.state.bids.tabFilter == 'Pending'">
+                You do not have any {{$store.state.bids.tabFilter}} questions.
+              </span>
+              <span v-else-if="$store.state.bids.tabFilter == 'Answered'">
+                You do not have any {{$store.state.bids.tabFilter}} questions.
+              </span>
+              <span v-else-if="$store.state.bids.tabFilter == 'Expired'">
+                You do not have any {{$store.state.bids.tabFilter}} questions.
+              </span>
+              <span v-else>
+                No questions have been made with this address.
+              </span>
+            </v-card-subtitle>
           </v-card>
         </div>
       </v-col>
@@ -323,14 +354,13 @@ export default {
       dialog: false,
       isSearchByUsername: false,
       question: {
-        toAddress: "0x13c5DB04644f9cfE79C79bBB1a74aaB9A04C98ea",
-        bid: 0,
-        text: "randomstring_" + Math.random().toString().substr(2, 5),
+        toAddress: "",
+        bid: null,
+        text: "",
         timeLimit: { name: "No Limit", value: 0 },
       },
       timeLimitItems: [
         { name: "No Limit", value: 0 },
-        { name: "2 min", value: 120 },
         { name: "1 hour", value: 3600 },
         { name: "3 hours", value: 10800 },
         { name: "6 hours", value: 21600 },
@@ -339,6 +369,7 @@ export default {
         { name: "3 days", value: 72 * 3600 },
         { name: "1 week", value: 168 * 3600 },
       ],
+      isFormValid: false
     };
   },
   computed: {
@@ -360,12 +391,12 @@ export default {
     },
   },
   mounted() {
-    this.printMyBids();
     if (this.isMetaMaskAuthenticated) {
       this.$store.commit("bids/SET_TAB_FILTER", "Answered");
       this.updateMyBids();
       this.$store.dispatch("bindUsers");
     } else {
+      this.$router.push('/')
       this.endLoading();
     }
   },
