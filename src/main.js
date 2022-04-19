@@ -8,6 +8,8 @@ Vue.use(AsyncComputed)
 import VueMeta from 'vue-meta'
 Vue.use(VueMeta)
 
+import '@/styles/app.scss'
+
 Vue.config.productionTip = false
 
 window.app = new Vue({

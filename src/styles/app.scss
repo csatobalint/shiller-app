@@ -1,0 +1,41 @@
+html {
+    overflow-y: auto !important;
+}
+
+.gradientBackgroundColor {
+  background: radial-gradient(
+    circle,
+    var(--v-backgroundColor1-base) 0%,
+    var(--v-backgroundColor2-base) 50%,
+    var(--v-backgroundColor3-base) 100%
+  );
+}
+.gradientAppBarColor {
+  background: var(--v-appbarColor1-base);
+  background: linear-gradient(
+    90deg,
+    var(--v-appbarColor1-base) 0%,
+    var(--v-appbarColor1-base) 50%,
+    var(--v-appbarColor1-base) 100%
+  );
+  border-bottom: 1px solid rgb(32 34 49);
+}
+.answerQuestionBackground {
+  background: var(--v-answerQuestionBackgroundColor-base);
+  background: linear-gradient(
+    90deg,
+    var(--v-answerQuestionBackgroundColor-base) 0%,
+    var(--v-answerQuestionBackgroundColor-base) 50%,
+    var(--v-answerQuestionBackgroundColor-base) 100%
+  );
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

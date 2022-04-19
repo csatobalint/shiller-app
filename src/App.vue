@@ -209,11 +209,26 @@
               </div>
             </template>
             <template v-if="isMetaMaskAuthenticated">
-              <template v-if="isAuthenticated && isMetaMaskAuthenticated && user !== null">
+              <template
+                v-if="
+                  isAuthenticated && isMetaMaskAuthenticated && user !== null
+                "
+              >
                 <template>
-                  <v-menu v-model="showMenu" absolute offset-y style="max-width: 600px">
+                  <v-menu
+                    v-model="showMenu"
+                    absolute
+                    offset-y
+                    style="max-width: 600px"
+                  >
                     <template v-slot:activator="{ on, attrs }">
-                      <v-avatar class="ml-2" size=40 v-if="user.photoURL" v-bind="attrs" v-on="on">
+                      <v-avatar
+                        class="ml-2"
+                        size="40"
+                        v-if="user.photoURL"
+                        v-bind="attrs"
+                        v-on="on"
+                      >
                         <img :src="user.photoURL" />
                       </v-avatar>
                       <v-avatar
@@ -229,13 +244,15 @@
                       <v-list-item>
                         <v-list-item-avatar>
                           <v-avatar v-if="user.photoURL">
-                            <img :src="user.photoURL" size="40"/>
+                            <img :src="user.photoURL" size="40" />
                           </v-avatar>
                           <v-avatar v-else color="primary" size="40"
                             ><v-icon dark> mdi-account-circle </v-icon>
                           </v-avatar>
                         </v-list-item-avatar>
-                        <v-list-item-content>{{ userName }}</v-list-item-content>
+                        <v-list-item-content>{{
+                          userName
+                        }}</v-list-item-content>
                       </v-list-item>
 
                       <v-list-item link>
@@ -243,7 +260,9 @@
                           <v-list-item-title class="text-h6">
                             {{ user.displayName }}
                           </v-list-item-title>
-                          <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+                          <v-list-item-subtitle>{{
+                            user.email
+                          }}</v-list-item-subtitle>
                         </v-list-item-content>
 
                         <v-list-item-action>
@@ -277,30 +296,29 @@
               </template>
               <template v-else>
                 <v-tooltip left>
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn text icon color="">
-                        <v-btn
-                          class="ml-2"
-                          color="primary"
-                          size="40"
-                          fab
-                          outlined small
-                          v-bind="attrs"
-                          v-on="on"
-                          @click="signInWithTwitter()"
-                          ><v-icon dark> mdi-twitter </v-icon>
-                        </v-btn>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn text icon color="">
+                      <v-btn
+                        class="ml-2"
+                        color="primary"
+                        size="40"
+                        fab
+                        outlined
+                        small
+                        v-bind="attrs"
+                        v-on="on"
+                        @click="signInWithTwitter()"
+                        ><v-icon dark> mdi-twitter </v-icon>
                       </v-btn>
-                    </template>
-                    <span>Connect with Twitter account</span>
+                    </v-btn>
+                  </template>
+                  <span>Connect with Twitter account</span>
                 </v-tooltip>
               </template>
             </template>
-            
           </div>
         </v-col>
       </v-row>
-      
     </v-app-bar>
 
     <v-main class="gradientBackgroundColor">
@@ -424,7 +442,9 @@
       <!-- Provides the application the proper gutter -->
       <v-container fluid>
         <!-- If using vue-router -->
-        <Transition name="fade" mode="out-in"> <router-view></router-view> </Transition>
+        <Transition name="fade" mode="out-in">
+          <router-view></router-view>
+        </Transition>
       </v-container>
     </v-main>
     <v-footer color="gradientAppBarColor" padless>
@@ -447,17 +467,15 @@ import globaMixin from "./views/globalMixin";
 export default {
   name: "App",
   metaInfo: {
-      // if no subcomponents specify a metaInfo.title, this title will be used
-      title: 'cASK',
-      // // all titles will be injected into this template
-      // titleTemplate: '%s | cASK Me'
-      meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-      ],
-      link: [
-      { rel: 'icon', href: '/cask32.png', type: "image/png" }
-    ]
+    // if no subcomponents specify a metaInfo.title, this title will be used
+    title: "cASK",
+    // // all titles will be injected into this template
+    // titleTemplate: '%s | cASK Me'
+    meta: [
+      { charset: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+    ],
+    link: [{ rel: "icon", href: "/cask32.png", type: "image/png" }],
   },
   mixins: [globaMixin],
   data() {
@@ -525,7 +543,7 @@ export default {
       this.connectWalletButtonText = "Onboarding in progress";
       this.connectWalletButtonDisabled = true;
       //On this object we have startOnboarding which will start the onboarding process for our end user
-      let url = process.env.VUE_APP_FORWARD_ORIGIN + this.$route.fullPath;
+      let url = process.env.VUE_APP_HOST + this.$route.fullPath;
       const onboarding = new MetaMaskOnboarding({ url });
       onboarding.startOnboarding();
     },
@@ -609,7 +627,7 @@ export default {
 
             // Get the contract
             const contract = new ethers.Contract(
-              process.env.VUE_APP_CONTRACT_ADDRESS_V3.toLowerCase(), //contract address in .env file
+              process.env.VUE_APP_CONTRACT_ADDRESS.toLowerCase(), //contract address in .env file
               process.env.VUE_APP_ABI,
               this.provider
             );
@@ -629,8 +647,7 @@ export default {
             if (
               localStorage.getItem("decryptedPrivateKey") == null &&
               this.isKeysSet
-            ) 
-            {
+            ) {
               this.openNotificationDialog({
                 title: "Decrypt request",
                 text: `Messages are decrypted with help of the MetaMask client. 
@@ -645,15 +662,14 @@ export default {
               this.$store.commit("auth/SET_DECRYPTED_PRIVATE_KEY", privateKey);
             }
 
-              // Get the current block number of the chain
-              const blockNumber = await this.provider.getBlockNumber();
-              //console.log(blockNumber)
-              this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
-
+            // Get the current block number of the chain
+            const blockNumber = await this.provider.getBlockNumber();
+            //console.log(blockNumber)
+            this.$store.commit("bids/SET_BLOCK_NUMBER", blockNumber);
           } else {
             this.connectWalletButtonDisabled = true;
             //On this object we have startOnboarding which will start the onboarding process for our end user
-            let url = process.env.VUE_APP_FORWARD_ORIGIN + this.$route.fullPath;
+            let url = process.env.VUE_APP_HOST + this.$route.fullPath;
             const onboarding = new MetaMaskOnboarding({ url });
             onboarding.startOnboarding();
           }
@@ -672,9 +688,9 @@ export default {
     },
     disconnectMetaMask() {
       this.$store.dispatch("auth/clearMetaMaskUser");
-      this.connectWalletDialog = false
+      this.connectWalletDialog = false;
       this.$router.push("/");
-    }
+    },
   },
   created() {
     //if metamask is isntalled and desktop devices, and already logged in then try to connect on load
@@ -686,55 +702,8 @@ export default {
       localStorage.getItem("isMetaMaskAuthenticated") &&
       localStorage.getItem("decryptedPrivateKey") != null
     ) {
-      this.connectToMetaMask()
+      this.connectToMetaMask();
     }
-  },
-  mounted () {
-    
   },
 };
 </script>
-
-<style lang="scss">
-html {
-  overflow-y: auto !important;
-}
-
-.gradientBackgroundColor {
-  background: radial-gradient(
-    circle,
-    var(--v-backgroundColor1-base) 0%,
-    var(--v-backgroundColor2-base) 50%,
-    var(--v-backgroundColor3-base) 100%
-  );
-}
-.gradientAppBarColor {
-  background: var(--v-appbarColor1-base);
-  background: linear-gradient(
-    90deg,
-    var(--v-appbarColor1-base) 0%,
-    var(--v-appbarColor1-base) 50%,
-    var(--v-appbarColor1-base) 100%
-  );
-  border-bottom: 1px solid rgb(32 34 49);
-}
-.answerQuestionBackground {
-  background: var(--v-answerQuestionBackgroundColor-base);
-  background: linear-gradient(
-    90deg,
-    var(--v-answerQuestionBackgroundColor-base) 0%,
-    var(--v-answerQuestionBackgroundColor-base) 50%,
-    var(--v-answerQuestionBackgroundColor-base) 100%
-  );
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

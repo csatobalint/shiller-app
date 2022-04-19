@@ -124,7 +124,11 @@ const auth = {
               await db.collection('users').doc(user.email).update(userProfile)
               commit("SET_USER", user.providerData[0]);
             } else {
-              await db.collection('users').doc(user.email).set(userProfile)
+              try {
+                await db.collection('users').doc(user.email).set(userProfile)
+              } catch (error) {
+                console.log(error)
+              }
               commit("SET_USER", user.providerData[0]);
             }
         }else {

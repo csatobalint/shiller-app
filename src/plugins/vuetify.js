@@ -39,7 +39,7 @@ export default new Vuetify({
               backgroundColor2: colors.grey.lighten5,
               backgroundColor3: colors.grey.lighten5,
               appbarColor1: colors.shades.white,
-              answerQuestionBackground: colors.teal.lighten5
+              answerQuestionBackground: colors.teal.lighten4
             },
             dark: {
               appbarColor: '#0d0415',
@@ -48,10 +48,14 @@ export default new Vuetify({
               foreground2: '#24264C',
               primary: colors.purple.lighten2,
               secondary: colors.shades.transparent,
-              backgroundColor1: RGBToHex(23, 7, 30, 1),
-              backgroundColor2: RGBToHex(22, 8, 30, 1),
-              backgroundColor3: RGBToHex(16, 10, 31, 1),
-              appbarColor1: RGBToHex(16, 10, 31, 1),
+              accent: colors.shades.black,
+              success: colors.red.accent3,
+              error: colors.red.accent3,
+              info: colors.red.accent3,
+              backgroundColor1: RGBToHex(23, 7, 30),
+              backgroundColor2: RGBToHex(22, 8, 30),
+              backgroundColor3: RGBToHex(16, 10, 31),
+              appbarColor1: RGBToHex(16, 10, 31),
               answerQuestionBackgroundColor: colors.teal.darken4
             },
           },
